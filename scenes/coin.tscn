@@ -1,0 +1,43 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/coin.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/coin.png" id="2_sheet"]
+
+[sub_resource type="AtlasTexture" id="at_spin0"]
+atlas = ExtResource("2_sheet")
+region = Rect2(0, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="at_spin1"]
+atlas = ExtResource("2_sheet")
+region = Rect2(16, 0, 16, 16)
+
+[sub_resource type="SpriteFrames" id="sf_coin"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("at_spin0")
+}, {
+"duration": 1.0,
+"texture": SubResource("at_spin1")
+}],
+"loop": true,
+"name": &"spin",
+"speed": 4.0
+}]
+
+[sub_resource type="CircleShape2D" id="shape_coin"]
+radius = 6.0
+
+[node name="Coin" type="Area2D"]
+collision_layer = 0
+collision_mask = 2
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("sf_coin")
+animation = &"spin"
+autoplay = "spin"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("shape_coin")
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]
