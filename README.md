@@ -39,3 +39,14 @@ Open the project in Godot 4.x and press F5, or:
 ```
 godot --path . 
 ```
+
+## Tests
+
+A headless gameplay regression test covers coin pickup, the stomp
+mechanic, and spike death:
+
+```
+godot --headless --path . res://tests/gameplay_test.tscn
+```
+
+It prints PASS/FAIL per check and exits non-zero on failure.
