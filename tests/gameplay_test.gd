@@ -17,6 +17,25 @@ func _ready() -> void:
 	_check(GameManager._level_labels.size() == 6, "six levels are registered")
 	_check(GameManager._level_labels[5] == "2-3", "last level is labeled 2-3")
 
+	# --- Taller goal flag (PG-36) ---
+	_check(load("res://assets/flag.png").get_height() == 32, "goal flag art is two tiles tall")
+
+	# --- World map logic and screen (PG-37) ---
+	_check(GameManager.is_last_in_world(2), "1-3 is the last stage of world 1")
+	_check(not GameManager.is_last_in_world(3), "2-1 is not the last stage of a world")
+	_check(GameManager.is_last_in_world(5), "2-3 is the last stage of world 2")
+	GameManager.levels_completed = 3
+	GameManager.current_level = 2
+	var map: Control = load("res://scenes/world_map.tscn").instantiate()
+	add_child(map)
+	await _wait_process_frames(2)
+	var map_box: VBoxContainer = map.get_node("%MapBox")
+	_check(map_box.get_child_count() == 2, "world map has a row per world")
+	_check(map_box.get_child(0).get_child_count() == 4, "world row lists its three stages")
+	map.queue_free()
+	GameManager.levels_completed = 0
+	GameManager.current_level = 0
+
 	# --- Avatar selection (PG-30) ---
 	GameManager.selected_avatar = 1
 	var avatar_player: Player = load("res://scenes/player.tscn").instantiate()
@@ -40,6 +59,20 @@ func _ready() -> void:
 	player.velocity = Vector2.ZERO
 	await _wait_frames(10)
 	_check(GameManager.coins >= coins_before + 1, "touching a coin collects it")
+
+	# --- Level boundaries (PG-35) ---
+	player.global_position = Vector2(12, 104)
+	player.velocity = Vector2.ZERO
+	Input.action_press("move_left")
+	await _wait_frames(40)
+	Input.action_release("move_left")
+	_check(player.global_position.x > 0.0, "left boundary stops the player")
+	player.global_position = Vector2(1012, 104)
+	player.velocity = Vector2.ZERO
+	Input.action_press("move_right")
+	await _wait_frames(40)
+	Input.action_release("move_right")
+	_check(player.global_position.x < 1024.0, "right boundary stops the player")
 
 	# --- Double jump (PG-21) ---
 	player.global_position = Vector2(520, 104)  # empty, flat spot in level 1

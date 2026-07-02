@@ -93,6 +93,7 @@ func _build() -> void:
 			_place(line[x], Vector2i(x, y))
 
 	_kill_y = (lines.size() + 4) * TILE
+	_add_boundaries(width, lines.size())
 	if _player == null:
 		push_warning("Level layout has no player start ('P').")
 		return
@@ -101,6 +102,24 @@ func _build() -> void:
 	cam.limit_right = width * TILE
 	cam.limit_bottom = (lines.size() + 2) * TILE
 	cam.reset_smoothing()
+
+
+## Invisible walls at both ends of the map so the player and enemies
+## cannot walk out of bounds (PG-35). They reach 20 tiles above the
+## level, well beyond double-jump height.
+func _add_boundaries(width: int, rows: int) -> void:
+	var walls := StaticBody2D.new()
+	walls.collision_layer = 1
+	var top := -20.0 * TILE
+	var bottom := float(rows + 4) * TILE
+	for x in [-TILE / 2.0, width * TILE + TILE / 2.0]:
+		var shape := CollisionShape2D.new()
+		var rect := RectangleShape2D.new()
+		rect.size = Vector2(TILE, bottom - top)
+		shape.shape = rect
+		shape.position = Vector2(x, (top + bottom) / 2.0)
+		walls.add_child(shape)
+	add_child(walls)
 
 
 func _place(ch: String, cell: Vector2i) -> void:

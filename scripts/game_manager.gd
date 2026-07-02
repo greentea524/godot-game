@@ -36,9 +36,12 @@ var lives := START_LIVES
 var current_level := 0
 var respawn_position := Vector2.ZERO
 var selected_avatar := 0
+## Number of consecutively completed levels; drives the world map (PG-37).
+var levels_completed := 0
 
 var _level_paths: Array[String] = []
 var _level_labels: Array[String] = []
+var _level_world: Array[int] = []
 
 
 func _init() -> void:
@@ -46,11 +49,13 @@ func _init() -> void:
 		for stage in WORLDS[world].size():
 			_level_paths.append(WORLDS[world][stage])
 			_level_labels.append("%d-%d" % [world + 1, stage + 1])
+			_level_world.append(world)
 
 
 func start_game() -> void:
 	coins = 0
 	lives = START_LIVES
+	levels_completed = 0
 	coins_changed.emit(coins)
 	lives_changed.emit(lives)
 	goto_level(0)
@@ -78,6 +83,30 @@ func main_menu() -> void:
 ## World-stage label for the HUD, e.g. "1-2" (PG-22).
 func level_label() -> String:
 	return _level_labels[current_level]
+
+
+func level_count() -> int:
+	return _level_paths.size()
+
+
+func flat_index(world: int, stage: int) -> int:
+	var index := 0
+	for w in world:
+		index += WORLDS[w].size()
+	return index + stage
+
+
+func world_of(index: int) -> int:
+	return _level_world[index]
+
+
+func is_completed(index: int) -> bool:
+	return index < levels_completed
+
+
+func is_last_in_world(index: int) -> bool:
+	return index == _level_paths.size() - 1 \
+			or _level_world[index] != _level_world[index + 1]
 
 
 func avatar_sheet() -> String:
@@ -109,10 +138,22 @@ func set_checkpoint(pos: Vector2) -> void:
 
 
 func level_complete() -> void:
-	if current_level >= _level_paths.size() - 1:
-		_change_scene("res://scenes/win_screen.tscn")
+	levels_completed = maxi(levels_completed, current_level + 1)
+	# Finishing a world's last stage shows the world map (PG-37);
+	# mid-world stages keep the regular level-complete screen.
+	if is_last_in_world(current_level):
+		_change_scene("res://scenes/world_map.tscn")
 	else:
 		_change_scene("res://scenes/level_complete.tscn")
+
+
+## Continue from the world map: next unfinished level, or the win
+## screen once everything is done.
+func continue_from_world_map() -> void:
+	if levels_completed >= _level_paths.size():
+		_change_scene("res://scenes/win_screen.tscn")
+	else:
+		goto_level(levels_completed)
 
 
 func trigger_game_over(delay := 1.0) -> void:
