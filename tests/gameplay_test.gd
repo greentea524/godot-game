@@ -3,12 +3,30 @@ extends Node
 ##   godot --headless --path . res://tests/gameplay_test.tscn
 ## Prints PASS/FAIL per check and exits non-zero on any failure.
 ## Covers the interaction wiring that a scene-load smoke test misses:
-## coin pickup, enemy stomp, and spike death.
+## coin pickup, enemy stomp, spike death, double jump, level labels,
+## avatar selection, and pause.
 
 var _failures := 0
 
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
+
+	# --- Level labels (PG-22) ---
+	_check(GameManager.level_label() == "1-1", "first level is labeled 1-1")
+	_check(GameManager._level_labels.size() == 6, "six levels are registered")
+	_check(GameManager._level_labels[5] == "2-3", "last level is labeled 2-3")
+
+	# --- Avatar selection (PG-30) ---
+	GameManager.selected_avatar = 1
+	var avatar_player: Player = load("res://scenes/player.tscn").instantiate()
+	add_child(avatar_player)
+	var idle_atlas: AtlasTexture = avatar_player.sprite.sprite_frames.get_frame_texture("idle", 0)
+	_check(idle_atlas.atlas.resource_path.ends_with("player2.png"),
+			"selected avatar sheet is applied to the player")
+	avatar_player.queue_free()
+	GameManager.selected_avatar = 0
+
 	var level: Node2D = load("res://levels/level_1.tscn").instantiate()
 	add_child(level)
 	await _wait_frames(5)
@@ -23,6 +41,27 @@ func _ready() -> void:
 	await _wait_frames(10)
 	_check(GameManager.coins >= coins_before + 1, "touching a coin collects it")
 
+	# --- Double jump (PG-21) ---
+	player.global_position = Vector2(520, 104)  # empty, flat spot in level 1
+	player.velocity = Vector2.ZERO
+	await _wait_frames(5)
+	Input.action_press("jump")
+	await _wait_frames(2)
+	Input.action_release("jump")
+	_check(player.velocity.y < 0.0, "ground jump launches the player")
+	await _wait_frames(12)  # well into the air
+	Input.action_press("jump")
+	await _wait_frames(2)
+	_check(player.velocity.y < -200.0, "double jump gives a second mid-air boost")
+	Input.action_release("jump")
+	await _wait_frames(2)
+	var vel_before_third := player.velocity.y
+	Input.action_press("jump")
+	await _wait_frames(2)
+	Input.action_release("jump")
+	_check(player.velocity.y > vel_before_third, "third jump in one airtime is not allowed")
+	await _wait_frames(40)  # land
+
 	# --- Stomp (PG-15) ---
 	var enemy: CharacterBody2D = load("res://scenes/enemy.tscn").instantiate()
 	enemy.global_position = Vector2(320, 104)  # empty, flat spot in level 1
@@ -33,6 +72,14 @@ func _ready() -> void:
 	await _wait_frames(30)
 	_check(not is_instance_valid(enemy), "stomping removes the enemy")
 	_check(not player.dying, "player survives a stomp")
+
+	# --- Pause (PG-29) ---
+	_press_action("pause")
+	await _wait_process_frames(3)
+	_check(get_tree().paused, "ESC pauses the game")
+	_press_action("pause")
+	await _wait_process_frames(3)
+	_check(not get_tree().paused, "ESC again resumes the game")
 
 	# --- Spike death (PG-16/PG-10) ---
 	var spikes: Area2D = load("res://scenes/spikes.tscn").instantiate()
@@ -60,6 +107,17 @@ func _check(condition: bool, name: String) -> void:
 		print("FAIL: " + name)
 
 
+## Sends the action through the input pipeline (press + release) so
+## _unhandled_input handlers see it — Input.action_press alone only
+## updates polled state.
+func _press_action(action: String) -> void:
+	for pressed in [true, false]:
+		var event := InputEventAction.new()
+		event.action = action
+		event.pressed = pressed
+		Input.parse_input_event(event)
+
+
 func _find_by_scene(root: Node, scene_path: String) -> Node:
 	for child in root.get_children():
 		if child.scene_file_path == scene_path:
@@ -70,3 +128,8 @@ func _find_by_scene(root: Node, scene_path: String) -> Node:
 func _wait_frames(count: int) -> void:
 	for i in count:
 		await get_tree().physics_frame
+
+
+func _wait_process_frames(count: int) -> void:
+	for i in count:
+		await get_tree().process_frame

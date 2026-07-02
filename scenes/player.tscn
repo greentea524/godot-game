@@ -1,7 +1,9 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://scripts/player.gd" id="1_script"]
 [ext_resource type="Texture2D" path="res://assets/player.png" id="2_sheet"]
+[ext_resource type="AudioStream" path="res://assets/sfx/jump.wav" id="3_jump"]
+[ext_resource type="AudioStream" path="res://assets/sfx/double_jump.wav" id="4_djump"]
 
 [sub_resource type="AtlasTexture" id="at_idle0"]
 atlas = ExtResource("2_sheet")
@@ -102,3 +104,9 @@ shape = SubResource("shape_body")
 [node name="Camera2D" type="Camera2D" parent="."]
 zoom = Vector2(2, 2)
 position_smoothing_enabled = true
+
+[node name="JumpSound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("3_jump")
+
+[node name="DoubleJumpSound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("4_djump")

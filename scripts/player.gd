@@ -1,24 +1,37 @@
 class_name Player
 extends CharacterBody2D
 ## Side-scroller player controller: run, variable-height jump with
-## coyote time + jump buffering, state-driven animations, death/respawn.
+## coyote time + jump buffering, one mid-air double jump, state-driven
+## animations, death/respawn, and the session-selected avatar skin.
 
 const SPEED := 140.0
 const JUMP_VELOCITY := -320.0
 const JUMP_CUT_MULTIPLIER := 0.4
 const COYOTE_TIME := 0.1
 const JUMP_BUFFER := 0.1
+const MAX_AIR_JUMPS := 1
 const STOMP_BOUNCE := -200.0
 const DEATH_HOP := -220.0
 const RESPAWN_DELAY := 0.9
+
+## All avatar sheets share this 8-frame layout (16x16 per frame).
+const SHEET_FRAMES := {"idle": [0, 1], "run": [2, 3, 4, 5], "jump": [6], "fall": [7]}
+const SHEET_FPS := {"idle": 3.0, "run": 10.0, "jump": 5.0, "fall": 5.0}
 
 var dying := false
 
 var _coyote_timer := 0.0
 var _jump_buffer_timer := 0.0
+var _air_jumps_left := MAX_AIR_JUMPS
 
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var camera: Camera2D = $Camera2D
+@onready var jump_sound: AudioStreamPlayer = $JumpSound
+@onready var double_jump_sound: AudioStreamPlayer = $DoubleJumpSound
+
+
+func _ready() -> void:
+	_apply_avatar()
 
 
 func _physics_process(delta: float) -> void:
@@ -30,6 +43,7 @@ func _physics_process(delta: float) -> void:
 
 	if is_on_floor():
 		_coyote_timer = COYOTE_TIME
+		_air_jumps_left = MAX_AIR_JUMPS
 	else:
 		velocity.y += get_gravity().y * delta
 		_coyote_timer -= delta
@@ -39,10 +53,20 @@ func _physics_process(delta: float) -> void:
 	else:
 		_jump_buffer_timer -= delta
 
-	if _jump_buffer_timer > 0.0 and _coyote_timer > 0.0:
+	var can_ground_jump := is_on_floor() or _coyote_timer > 0.0
+	if _jump_buffer_timer > 0.0 and can_ground_jump:
 		velocity.y = JUMP_VELOCITY
 		_jump_buffer_timer = 0.0
 		_coyote_timer = 0.0
+		jump_sound.play()
+	elif Input.is_action_just_pressed("jump") and not can_ground_jump \
+			and _air_jumps_left > 0:
+		# Double jump (PG-21): one extra boost per airtime, reset on landing.
+		velocity.y = JUMP_VELOCITY
+		_air_jumps_left -= 1
+		_jump_buffer_timer = 0.0
+		double_jump_sound.play()
+		_double_jump_flair()
 
 	# Variable jump height: releasing jump early cuts the ascent.
 	if Input.is_action_just_released("jump") and velocity.y < 0.0:
@@ -55,6 +79,26 @@ func _physics_process(delta: float) -> void:
 	_update_animation(direction)
 
 
+## Builds the sprite frames from the avatar sheet chosen in the main
+## menu (PG-30). All sheets share one frame layout, so switching
+## avatars is just an atlas swap.
+func _apply_avatar() -> void:
+	var sheet: Texture2D = load(GameManager.avatar_sheet())
+	var frames := SpriteFrames.new()
+	frames.remove_animation("default")
+	for anim in SHEET_FRAMES:
+		frames.add_animation(anim)
+		frames.set_animation_speed(anim, SHEET_FPS[anim])
+		frames.set_animation_loop(anim, true)
+		for index in SHEET_FRAMES[anim]:
+			var frame := AtlasTexture.new()
+			frame.atlas = sheet
+			frame.region = Rect2(index * 16, 0, 16, 16)
+			frames.add_frame(anim, frame)
+	sprite.sprite_frames = frames
+	sprite.play("idle")
+
+
 func _update_animation(direction: float) -> void:
 	if direction != 0.0:
 		sprite.flip_h = direction < 0.0
@@ -64,6 +108,13 @@ func _update_animation(direction: float) -> void:
 		sprite.play("run")
 	else:
 		sprite.play("idle")
+
+
+## Distinct visual for the second jump: a quick squash-and-stretch.
+func _double_jump_flair() -> void:
+	sprite.scale = Vector2(1.4, 0.6)
+	var tween := create_tween()
+	tween.tween_property(sprite, "scale", Vector2.ONE, 0.15)
 
 
 ## Upward bounce after stomping an enemy.

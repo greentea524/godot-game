@@ -1,7 +1,8 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/coin.gd" id="1_script"]
 [ext_resource type="Texture2D" path="res://assets/coin.png" id="2_sheet"]
+[ext_resource type="AudioStream" path="res://assets/sfx/coin.wav" id="3_pickup"]
 
 [sub_resource type="AtlasTexture" id="at_spin0"]
 atlas = ExtResource("2_sheet")
@@ -40,5 +41,8 @@ autoplay = "spin"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("shape_coin")
+
+[node name="Pickup" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("3_pickup")
 
 [connection signal="body_entered" from="." to="." method="_on_body_entered"]

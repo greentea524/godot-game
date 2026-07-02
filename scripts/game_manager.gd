@@ -1,21 +1,51 @@
 extends Node
-## Autoloaded singleton owning run state (coins, lives, current level)
-## and all scene transitions.
+## Autoloaded singleton owning run state (coins, lives, current level,
+## avatar choice) and all scene transitions.
 
 signal coins_changed(count: int)
 signal lives_changed(count: int)
 
-const LEVELS: Array[String] = [
-	"res://levels/level_1.tscn",
-	"res://levels/level_2.tscn",
-	"res://levels/level_3.tscn",
+## Levels grouped by world; the HUD shows "world-stage" (1-1 ... 2-3).
+## Adding a new world or stage here is all that's needed — labels and
+## win-screen placement adapt automatically (PG-22).
+const WORLDS: Array = [
+	[
+		"res://levels/level_1.tscn",
+		"res://levels/level_2.tscn",
+		"res://levels/level_3.tscn",
+	],
+	[
+		"res://levels/level_2_1.tscn",
+		"res://levels/level_2_2.tscn",
+		"res://levels/level_2_3.tscn",
+	],
 ]
 const START_LIVES := 3
+
+## Player avatars selectable from the main menu (PG-30). The choice
+## persists for the whole session, including level restarts.
+const AVATAR_SHEETS: Array[String] = [
+	"res://assets/player.png",
+	"res://assets/player2.png",
+	"res://assets/player3.png",
+]
+const AVATAR_NAMES: Array[String] = ["Blue", "Green", "Orange"]
 
 var coins := 0
 var lives := START_LIVES
 var current_level := 0
 var respawn_position := Vector2.ZERO
+var selected_avatar := 0
+
+var _level_paths: Array[String] = []
+var _level_labels: Array[String] = []
+
+
+func _init() -> void:
+	for world in WORLDS.size():
+		for stage in WORLDS[world].size():
+			_level_paths.append(WORLDS[world][stage])
+			_level_labels.append("%d-%d" % [world + 1, stage + 1])
 
 
 func start_game() -> void:
@@ -27,8 +57,8 @@ func start_game() -> void:
 
 
 func goto_level(index: int) -> void:
-	current_level = clampi(index, 0, LEVELS.size() - 1)
-	_change_scene(LEVELS[current_level])
+	current_level = clampi(index, 0, _level_paths.size() - 1)
+	_change_scene(_level_paths[current_level])
 
 
 func next_level() -> void:
@@ -45,10 +75,19 @@ func main_menu() -> void:
 	_change_scene("res://scenes/main_menu.tscn")
 
 
+## World-stage label for the HUD, e.g. "1-2" (PG-22).
+func level_label() -> String:
+	return _level_labels[current_level]
+
+
+func avatar_sheet() -> String:
+	return AVATAR_SHEETS[selected_avatar]
+
+
 ## Levels call this on load so running a level scene directly from the
 ## editor still keeps progression consistent.
 func register_level(scene_path: String) -> void:
-	var index := LEVELS.find(scene_path)
+	var index := _level_paths.find(scene_path)
 	if index != -1:
 		current_level = index
 
@@ -70,7 +109,7 @@ func set_checkpoint(pos: Vector2) -> void:
 
 
 func level_complete() -> void:
-	if current_level >= LEVELS.size() - 1:
+	if current_level >= _level_paths.size() - 1:
 		_change_scene("res://scenes/win_screen.tscn")
 	else:
 		_change_scene("res://scenes/level_complete.tscn")

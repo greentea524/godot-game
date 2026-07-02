@@ -44,6 +44,8 @@ func _on_hitbox_body_entered(body: Node2D) -> void:
 
 
 func _squash() -> void:
+	# Sfx autoload so the sound survives this node being freed (PG-26).
+	Sfx.play_sfx("stomp")
 	set_physics_process(false)
 	$Hitbox.set_deferred("monitoring", false)
 	$CollisionShape2D.set_deferred("disabled", true)

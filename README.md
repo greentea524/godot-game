@@ -1,25 +1,32 @@
 # Platform Game
 
 A 2D platformer built with Godot 4 (GL Compatibility renderer). Implements the
-Jira project **PG**: player movement with coyote time and variable jump height,
-stompable patrolling enemies, spikes and fall hazards, coins, checkpoints,
-three levels, and full menu/game flow.
+Jira project **PG**: player movement with coyote time, variable jump height and
+a double jump, stompable patrolling enemies, spikes and fall hazards, coins,
+checkpoints, six levels across two worlds, sound effects, parallax cloud
+backgrounds, avatar selection, a pause menu, and full menu/game flow.
 
 ## Controls
 
 | Action | Keys |
 |---|---|
 | Move | A / D or Left / Right |
-| Jump | Space / W / Up (hold for higher jump) |
+| Jump | Space / W / Up (hold for higher jump, press again mid-air to double jump) |
+| Pause | Escape (Resume / Restart / Quit to menu) |
 
 ## Project structure
 
 ```
-assets/    sprites (generated placeholder pixel art) + tileset.tres
+assets/    sprites + sfx (generated placeholders) + tileset.tres
 scenes/    reusable scenes: player, enemy, coin, spikes, flag, checkpoint, HUD, menus
 scripts/   GDScript; scripts/levels/ holds the per-level layout scripts
-levels/    the three playable level scenes
+levels/    the six playable level scenes (worlds 1 and 2)
 ```
+
+Levels are grouped into worlds in `GameManager.WORLDS`; the HUD shows the
+current level as world-stage (1-1 ... 2-3). World 2 levels reuse the same
+tileset with color tints for a darker theme. The player's avatar (3 choices
+on the main menu) persists for the session.
 
 ## How levels work
 
