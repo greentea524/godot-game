@@ -4,3 +4,6 @@
 
 # System/tool files
 *.tmp
+
+# Local editor/tool settings (Claude Code)
+.claude/
