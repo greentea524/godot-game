@@ -12,6 +12,24 @@ var _failures := 0
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 
+	# --- Ghost interpolation (PG-51, ported from ghosts.js) ---
+	_check(GhostInterp.sample([], 0.0).is_empty(), "ghost sample is empty with no data")
+	var buf: Array = []
+	GhostInterp.push(buf, {"x": 0.0, "y": 0.0}, 0.0)
+	GhostInterp.push(buf, {"x": 100.0, "y": 0.0}, 100.0)
+	var mid := GhostInterp.sample(buf, 150.0, 100.0)  # render_t = 50 → halfway
+	_check(is_equal_approx(mid["x"], 50.0), "ghost interpolates between snapshots")
+	var ext_buf: Array = []
+	GhostInterp.push(ext_buf, {"x": 0.0, "y": 0.0, "vx": 100.0}, 0.0)
+	GhostInterp.push(ext_buf, {"x": 10.0, "y": 0.0, "vx": 100.0}, 100.0)
+	# render_t = 300, past newest → extrapolate 200 ms (capped): 10 + 100*0.2
+	var ext := GhostInterp.sample(ext_buf, 400.0, 100.0)
+	_check(is_equal_approx(ext["x"], 30.0), "ghost extrapolates along last velocity")
+	var cap_buf: Array = []
+	for i in 25:
+		GhostInterp.push(cap_buf, {"x": float(i), "y": 0.0}, float(i))
+	_check(cap_buf.size() == GhostInterp.MAX_SNAPSHOTS, "ghost buffer is capped")
+
 	# --- Level labels (PG-22, PG-53, PG-54) ---
 	_check(GameManager.level_label() == "1-1", "first level is labeled 1-1")
 	_check(GameManager._level_labels.size() == 12, "twelve levels are registered")

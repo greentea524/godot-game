@@ -49,6 +49,18 @@ runtime by `scripts/level.gd` onto a `TileMapLayer`. Legend: `G` grass ground
 and scene transitions. The HUD updates through its `coins_changed` /
 `lives_changed` signals.
 
+## Multiplayer (LAN ghost-race)
+
+An optional LAN ghost-race, reachable from the main menu's **Multiplayer**
+button (`scripts/net.gd`, autoloaded as `Net`). One player hosts an ENet
+server; others join by IP. Every client runs its own full local simulation and
+broadcasts its state at 15 Hz — remote players appear as **ghosts** (interpolated
+~100 ms in the past, extrapolated on packet gaps; see `scripts/ghost_interp.gd`,
+ported from the JS platformer's `ghosts.js`). Ghosts have no collision, so
+single-player behaviour is unchanged and everything runs only when `Net.active`.
+QR-code join is out of scope here (tracked separately). The host's IP is shown on
+its lobby screen; joiners type it in.
+
 ## Running
 
 Open the project in Godot 4.x and press F5, or:
@@ -66,4 +78,15 @@ mechanic, and spike death:
 godot --headless --path . res://tests/gameplay_test.tscn
 ```
 
-It prints PASS/FAIL per check and exits non-zero on failure.
+It prints PASS/FAIL per check and exits non-zero on failure (48 checks,
+including the ported ghost-interpolation math).
+
+Networking needs two processes, so it has its own smoke test — run a host and a
+client, each writes a one-line result to `user://net_<role>.txt`:
+
+```
+godot --headless --path . res://tests/net_smoke.tscn -- host
+godot --headless --path . res://tests/net_smoke.tscn -- client
+```
+
+Expected: host `peers=2 got_snapshot=true`, client `connected=true max_roster=2`.

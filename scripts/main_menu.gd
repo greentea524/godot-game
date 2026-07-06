@@ -7,6 +7,7 @@ func _ready() -> void:
 	var start: Button = %StartButton
 	start.pressed.connect(GameManager.start_game)
 	start.grab_focus()
+	%MultiplayerButton.pressed.connect(GameManager.open_multiplayer)
 	_build_avatar_row()
 
 

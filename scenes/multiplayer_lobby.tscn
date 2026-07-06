@@ -1,0 +1,94 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/multiplayer_lobby.gd" id="1_script"]
+
+[node name="MultiplayerLobby" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.09, 0.11, 0.16, 1)
+
+[node name="Center" type="CenterContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="Center"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Center/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+horizontal_alignment = 1
+text = "MULTIPLAYER"
+
+[node name="Status" type="Label" parent="Center/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+horizontal_alignment = 1
+text = "Host a game, or join one on your LAN."
+
+[node name="Choices" type="HBoxContainer" parent="Center/VBox"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 10
+
+[node name="HostButton" type="Button" parent="Center/VBox/Choices"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "  Host Game  "
+
+[node name="JoinButton" type="Button" parent="Center/VBox/Choices"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "  Join Game  "
+
+[node name="JoinRow" type="HBoxContainer" parent="Center/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 6
+
+[node name="IPEdit" type="LineEdit" parent="Center/VBox/JoinRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(160, 0)
+layout_mode = 2
+placeholder_text = "Host IP (e.g. 192.168.1.5)"
+
+[node name="ConnectButton" type="Button" parent="Center/VBox/JoinRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = " Connect "
+
+[node name="RosterPanel" type="PanelContainer" parent="Center/VBox"]
+layout_mode = 2
+
+[node name="RosterBox" type="VBoxContainer" parent="Center/VBox/RosterPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="StartButton" type="Button" parent="Center/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "  Start Race  "
+
+[node name="BackButton" type="Button" parent="Center/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "  Back  "

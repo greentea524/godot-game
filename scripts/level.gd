@@ -32,6 +32,7 @@ const MOVING_PLATFORM_SCENE := preload("res://scenes/moving_platform.tscn")
 const METEOR_SCENE := preload("res://scenes/meteor.tscn")
 const HUD_SCENE := preload("res://scenes/hud.tscn")
 const PAUSE_MENU_SCENE := preload("res://scenes/pause_menu.tscn")
+const GHOST_SCENE := preload("res://scenes/ghost.tscn")
 const CLOUDS_TEXTURE := preload("res://assets/clouds.png")
 const CRYSTALS_TEXTURE := preload("res://assets/crystals.png")
 const STARS_TEXTURE := preload("res://assets/stars.png")
@@ -63,6 +64,8 @@ var _player: Player
 var _kill_y := 0.0
 var _width := 0
 var _meteor_timer := 1.2
+## peer_id -> Ghost node, in multiplayer races (PG-51).
+var _ghosts := {}
 
 @onready var tiles: TileMapLayer = $TileMapLayer
 
@@ -185,6 +188,30 @@ func _add_boundaries(width: int, rows: int) -> void:
 	add_child(walls)
 
 
+## Renders remote racers as ghosts each frame (PG-51). Ghosts have no
+## collision, so the local simulation is unchanged; they simply follow
+## the interpolated snapshots relayed through Net.
+func _process(_delta: float) -> void:
+	if not Net.active:
+		return
+	var peers := Net.remote_peers()
+	for peer_id in peers:
+		var ghost: Ghost = _ghosts.get(peer_id)
+		if ghost == null or not is_instance_valid(ghost):
+			ghost = GHOST_SCENE.instantiate()
+			var entry: Dictionary = Net.roster.get(peer_id, {})
+			ghost.setup(entry.get("avatar", 0), entry.get("name", "Player"))
+			add_child(ghost)
+			_ghosts[peer_id] = ghost
+		ghost.apply_view(Net.ghost_view(peer_id))
+	# Drop ghosts for peers that have left.
+	for peer_id in _ghosts.keys():
+		if not peers.has(peer_id):
+			if is_instance_valid(_ghosts[peer_id]):
+				_ghosts[peer_id].queue_free()
+			_ghosts.erase(peer_id)
+
+
 ## Surface-world ground scenery (PG-55): a single _draw node placed
 ## behind the tilemap. Purely visual — no collision, no gameplay impact.
 func _add_ground_decor(width: int, rows: int) -> void:
@@ -237,6 +264,9 @@ func _place(ch: String, cell: Vector2i) -> void:
 			_player.position = pos
 			add_child(_player)
 			GameManager.set_checkpoint(pos)
+			# In a race, this is the local avatar we broadcast (PG-51).
+			if Net.active:
+				Net.local_player = _player
 
 
 func _spawn(scene: PackedScene, pos: Vector2) -> void:

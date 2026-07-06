@@ -93,6 +93,10 @@ func main_menu() -> void:
 	_change_scene("res://scenes/main_menu.tscn")
 
 
+func open_multiplayer() -> void:
+	_change_scene("res://scenes/multiplayer_lobby.tscn")
+
+
 ## World-stage label for the HUD, e.g. "1-2" (PG-22).
 func level_label() -> String:
 	return _level_labels[current_level]
