@@ -4,6 +4,7 @@ extends "res://scripts/level.gd"
 
 
 func _init() -> void:
+	ground_decor = "grassland"
 	layout = "\n".join([
 		".".repeat(29) + "CCC" + ".".repeat(32),                       # coins on high platform
 		".".repeat(28) + "BBBBB" + ".".repeat(31),                     # high platform

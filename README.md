@@ -31,8 +31,10 @@ Levels are grouped into worlds in `GameManager.WORLDS`; the HUD shows the
 current level as world-stage (1-1 ... 4-3). Worlds reuse the same tileset with
 color tints and swap the sky backdrop (`decor`: clouds / crystal cave / space
 starfield). World 4 runs at `gravity_scale` 0.55 for floaty jumps and spawns a
-meteor shower on its later stages. The player's avatar (3 choices on the main
-menu) persists for the session.
+meteor shower on its later stages. Worlds 1 and 2 scatter purely-decorative
+ground scenery (`ground_decor`: grassland / forest) behind the tilemap via
+`scripts/ground_decor.gd`, placed deterministically over solid ground. The
+player's avatar (3 choices on the main menu) persists for the session.
 
 ## How levels work
 

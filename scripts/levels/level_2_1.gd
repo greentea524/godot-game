@@ -9,6 +9,7 @@ func _init() -> void:
 	tile_tint = Color(0.72, 0.7, 0.95)
 	cloud_tint = Color(0.62, 0.6, 0.78)
 	# 80 columns. Ground segments 0-19, 24-47, 54-79 (gaps of 4 and 6).
+	ground_decor = "forest"
 	layout = "\n".join([
 		".".repeat(35) + "CC" + ".".repeat(43),               # coins on high platform
 		".".repeat(34) + "BBBB" + ".".repeat(42),             # high platform

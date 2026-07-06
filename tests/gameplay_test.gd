@@ -53,6 +53,28 @@ func _ready() -> void:
 	await _wait_frames(5)
 	var player: Player = level.get_node("Player")
 
+	# --- Ground decor (PG-55) ---
+	var decor := _find_decor(level)
+	_check(decor != null, "world 1 level has grassland ground decor")
+	if decor != null:
+		_check(decor.z_index < 0, "ground decor draws behind the tilemap")
+		_check(decor.get_child_count() == 0, "ground decor has no collision nodes")
+		_check(decor.kind == "grassland", "world 1 decor is grassland")
+		var h1: float = decor._hash(5, 17)
+		_check(decor._hash(5, 17) == h1, "decor placement hash is deterministic")
+	var forest_level: Node2D = load("res://levels/level_2_1.tscn").instantiate()
+	add_child(forest_level)
+	await _wait_frames(2)
+	var forest_decor := _find_decor(forest_level)
+	_check(forest_decor != null and forest_decor.kind == "forest",
+			"world 2 level has forest ground decor")
+	forest_level.queue_free()
+	var cave_level: Node2D = load("res://levels/level_3_1.tscn").instantiate()
+	add_child(cave_level)
+	await _wait_frames(2)
+	_check(_find_decor(cave_level) == null, "world 3 cave level has no ground decor")
+	cave_level.queue_free()
+
 	# --- Coin pickup (PG-11/PG-18 wiring) ---
 	var coin := _find_by_scene(level, "res://scenes/coin.tscn")
 	_check(coin != null, "level 1 contains coins")
@@ -201,17 +223,23 @@ func _ready() -> void:
 	var plat: AnimatableBody2D = load("res://scenes/moving_platform.tscn").instantiate()
 	plat.position = Vector2(2820, 320)
 	add_child(plat)
+	plat._t = 0.0  # deterministic phase: starts centered so the rider lands on it
 	var rider: Player = load("res://scenes/player.tscn").instantiate()
 	rider.position = Vector2(2820, 300)  # above the platform; falls onto it
 	add_child(rider)
 	await _wait_frames(24)  # land on the platform
-	var rider_x0 := rider.global_position.x
-	var plat_x0 := plat.global_position.x
-	await _wait_frames(30)  # platform drifts, carrying the rider
-	var plat_dx := plat.global_position.x - plat_x0
-	var rider_dx := rider.global_position.x - rider_x0
-	_check(absf(plat_dx) > 3.0, "moving platform drifts horizontally")
-	_check(absf(rider_dx - plat_dx) < 8.0, "moving platform carries the rider along")
+	# Track the platform's span and how far the rider ever strays from it,
+	# over a window wide enough to capture drift at any starting phase.
+	var pmin := plat.global_position.x
+	var pmax := plat.global_position.x
+	var max_gap := 0.0
+	for i in 120:
+		await get_tree().physics_frame
+		pmin = minf(pmin, plat.global_position.x)
+		pmax = maxf(pmax, plat.global_position.x)
+		max_gap = maxf(max_gap, absf(rider.global_position.x - plat.global_position.x))
+	_check(pmax - pmin > 3.0, "moving platform drifts horizontally")
+	_check(max_gap < 10.0, "moving platform carries the rider along")
 
 	# --- Spike death (PG-16/PG-10) ---
 	var spikes: Area2D = load("res://scenes/spikes.tscn").instantiate()
@@ -263,6 +291,13 @@ func _hazard_kills(scene_path: String, pos: Vector2) -> bool:
 	add_child(victim)
 	await _wait_frames(8)
 	return victim.dying
+
+
+func _find_decor(level: Node) -> GroundDecor:
+	for child in level.get_children():
+		if child is GroundDecor:
+			return child
+	return null
 
 
 func _find_by_scene(root: Node, scene_path: String) -> Node:

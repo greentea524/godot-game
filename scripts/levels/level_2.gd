@@ -6,6 +6,7 @@ extends "res://scripts/level.gd"
 
 func _init() -> void:
 	# 80 columns. Ground segments 0-17, 21-37, 41-59, 63-79 (gaps between).
+	ground_decor = "grassland"
 	layout = "\n".join([
 		".".repeat(31) + "CC" + ".".repeat(47),                # bonus coins, high platform
 		".".repeat(30) + "BBBB" + ".".repeat(46),              # high platform

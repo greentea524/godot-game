@@ -55,6 +55,9 @@ var gravity_scale := 1.0
 ## World 4 meteor shower (PG-54): drops meteors from above on the later
 ## space stages.
 var meteors := false
+## Ground scenery for the surface worlds (PG-55): "grassland" (World 1),
+## "forest" (World 2), or "" for none. Purely decorative, behind tiles.
+var ground_decor := ""
 
 var _player: Player
 var _kill_y := 0.0
@@ -152,6 +155,8 @@ func _build() -> void:
 	_width = width
 	_kill_y = (lines.size() + 4) * TILE
 	_add_boundaries(width, lines.size())
+	if ground_decor != "":
+		_add_ground_decor(width, lines.size())
 	if _player == null:
 		push_warning("Level layout has no player start ('P').")
 		return
@@ -178,6 +183,19 @@ func _add_boundaries(width: int, rows: int) -> void:
 		shape.position = Vector2(x, (top + bottom) / 2.0)
 		walls.add_child(shape)
 	add_child(walls)
+
+
+## Surface-world ground scenery (PG-55): a single _draw node placed
+## behind the tilemap. Purely visual — no collision, no gameplay impact.
+func _add_ground_decor(width: int, rows: int) -> void:
+	var decor := GroundDecor.new()
+	decor.kind = ground_decor
+	decor.width_px = width * TILE
+	decor.ground_row = rows - 1
+	decor.tiles = tiles
+	decor.z_index = -1
+	add_child(decor)
+	decor.queue_redraw()
 
 
 func _place(ch: String, cell: Vector2i) -> void:
