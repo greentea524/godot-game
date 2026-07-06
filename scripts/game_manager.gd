@@ -24,6 +24,11 @@ const WORLDS: Array = [
 		"res://levels/level_3_2.tscn",
 		"res://levels/level_3_3.tscn",
 	],
+	[
+		"res://levels/level_4_1.tscn",
+		"res://levels/level_4_2.tscn",
+		"res://levels/level_4_3.tscn",
+	],
 ]
 const START_LIVES := 3
 
@@ -43,6 +48,9 @@ var respawn_position := Vector2.ZERO
 var selected_avatar := 0
 ## Number of consecutively completed levels; drives the world map (PG-37).
 var levels_completed := 0
+## Gravity multiplier for the current level; World 4 uses 0.55 for
+## floaty low-gravity jumps (PG-54). Each level sets this on load.
+var gravity_scale := 1.0
 
 var _level_paths: Array[String] = []
 var _level_labels: Array[String] = []

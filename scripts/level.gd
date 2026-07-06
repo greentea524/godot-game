@@ -9,6 +9,7 @@ extends Node2D
 ##   K  checkpoint          F  goal flag
 ##   L  lava (World 3)      V  bat (World 3)
 ##   T  stalactite (W3)     X  crumbling platform (W3)
+##   A  alien (World 4)     M  moving platform (World 4)
 ##   .  empty
 
 const TILE := 16
@@ -26,10 +27,17 @@ const LAVA_SCENE := preload("res://scenes/lava.tscn")
 const BAT_SCENE := preload("res://scenes/bat.tscn")
 const STALACTITE_SCENE := preload("res://scenes/stalactite.tscn")
 const CRUMBLING_SCENE := preload("res://scenes/crumbling.tscn")
+const ALIEN_SCENE := preload("res://scenes/alien.tscn")
+const MOVING_PLATFORM_SCENE := preload("res://scenes/moving_platform.tscn")
+const METEOR_SCENE := preload("res://scenes/meteor.tscn")
 const HUD_SCENE := preload("res://scenes/hud.tscn")
 const PAUSE_MENU_SCENE := preload("res://scenes/pause_menu.tscn")
 const CLOUDS_TEXTURE := preload("res://assets/clouds.png")
 const CRYSTALS_TEXTURE := preload("res://assets/crystals.png")
+const STARS_TEXTURE := preload("res://assets/stars.png")
+
+const METEOR_MIN_GAP := 0.7
+const METEOR_MAX_GAP := 1.8
 
 ## Set by subclasses in _init().
 var layout := ""
@@ -39,18 +47,26 @@ var layout := ""
 var sky_color := Color(0.43, 0.72, 0.91)
 var tile_tint := Color.WHITE
 var cloud_tint := Color.WHITE
-## Background dressing: "clouds" (default) or "cave" — the crystal
-## backdrop used by World 3 (PG-53). Worlds without a sky pass "".
+## Background dressing: "clouds" (default), "cave" — the World 3 crystal
+## backdrop (PG-53), or "space" — the World 4 starfield (PG-54).
 var decor := "clouds"
+## World 4 low gravity (PG-54): 1.0 normal, 0.55 for floaty space jumps.
+var gravity_scale := 1.0
+## World 4 meteor shower (PG-54): drops meteors from above on the later
+## space stages.
+var meteors := false
 
 var _player: Player
 var _kill_y := 0.0
+var _width := 0
+var _meteor_timer := 1.2
 
 @onready var tiles: TileMapLayer = $TileMapLayer
 
 
 func _ready() -> void:
 	RenderingServer.set_default_clear_color(sky_color)
+	GameManager.gravity_scale = gravity_scale
 	tiles.modulate = tile_tint
 	_add_backdrop()
 	GameManager.register_level(scene_file_path)
@@ -59,11 +75,30 @@ func _ready() -> void:
 	add_child(PAUSE_MENU_SCENE.instantiate())
 
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	# Falling below the level bounds kills the player (PG-16).
 	if is_instance_valid(_player) and not _player.dying \
 			and _player.global_position.y > _kill_y:
 		_player.die()
+	if meteors:
+		_meteor_timer -= delta
+		if _meteor_timer <= 0.0:
+			_meteor_timer = randf_range(METEOR_MIN_GAP, METEOR_MAX_GAP)
+			_spawn_meteor()
+
+
+## World 4 meteor shower (PG-54): drop a meteor from above the player at
+## a random x across the level; the meteor falls and frees itself past
+## the kill plane.
+func _spawn_meteor() -> void:
+	if not is_instance_valid(_player):
+		return
+	var meteor := METEOR_SCENE.instantiate()
+	meteor.fall_limit = _kill_y + 64.0
+	var x := randf() * _width * TILE
+	var y := _player.global_position.y - 120.0
+	meteor.position = Vector2(x, y)
+	add_child(meteor)
 
 
 ## Two looping parallax layers at different scroll speeds and sizes give
@@ -76,6 +111,8 @@ func _add_backdrop() -> void:
 			texture = CLOUDS_TEXTURE
 		"cave":
 			texture = CRYSTALS_TEXTURE
+		"space":
+			texture = STARS_TEXTURE
 		_:
 			return  # no sky backdrop for this world
 
@@ -112,6 +149,7 @@ func _build() -> void:
 		for x in line.length():
 			_place(line[x], Vector2i(x, y))
 
+	_width = width
 	_kill_y = (lines.size() + 4) * TILE
 	_add_boundaries(width, lines.size())
 	if _player == null:
@@ -172,6 +210,10 @@ func _place(ch: String, cell: Vector2i) -> void:
 		"X":
 			# Crumbling platform is its own solid body, so no tile here.
 			_spawn(CRUMBLING_SCENE, pos)
+		"A":
+			_spawn(ALIEN_SCENE, pos)
+		"M":
+			_spawn(MOVING_PLATFORM_SCENE, pos)
 		"P":
 			_player = PLAYER_SCENE.instantiate()
 			_player.position = pos

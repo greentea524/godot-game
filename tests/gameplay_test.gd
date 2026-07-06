@@ -12,26 +12,27 @@ var _failures := 0
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 
-	# --- Level labels (PG-22, PG-53) ---
+	# --- Level labels (PG-22, PG-53, PG-54) ---
 	_check(GameManager.level_label() == "1-1", "first level is labeled 1-1")
-	_check(GameManager._level_labels.size() == 9, "nine levels are registered")
-	_check(GameManager._level_labels[8] == "3-3", "last level is labeled 3-3")
+	_check(GameManager._level_labels.size() == 12, "twelve levels are registered")
+	_check(GameManager._level_labels[11] == "4-3", "last level is labeled 4-3")
 
 	# --- Taller goal flag (PG-36) ---
 	_check(load("res://assets/flag.png").get_height() == 32, "goal flag art is two tiles tall")
 
-	# --- World map logic and screen (PG-37, PG-53) ---
+	# --- World map logic and screen (PG-37, PG-53, PG-54) ---
 	_check(GameManager.is_last_in_world(2), "1-3 is the last stage of world 1")
 	_check(not GameManager.is_last_in_world(3), "2-1 is not the last stage of a world")
 	_check(GameManager.is_last_in_world(5), "2-3 is the last stage of world 2")
 	_check(GameManager.is_last_in_world(8), "3-3 is the last stage of world 3")
+	_check(GameManager.is_last_in_world(11), "4-3 is the last stage of world 4")
 	GameManager.levels_completed = 3
 	GameManager.current_level = 2
 	var map: Control = load("res://scenes/world_map.tscn").instantiate()
 	add_child(map)
 	await _wait_process_frames(2)
 	var map_box: VBoxContainer = map.get_node("%MapBox")
-	_check(map_box.get_child_count() == 3, "world map has a row per world")
+	_check(map_box.get_child_count() == 4, "world map has a row per world")
 	_check(map_box.get_child(0).get_child_count() == 4, "world row lists its three stages")
 	map.queue_free()
 	GameManager.levels_completed = 0
@@ -167,6 +168,50 @@ func _ready() -> void:
 	add_child(stander)
 	await _wait_frames(55)  # land + shake (0.4s) + collapse
 	_check(crumble.col.disabled, "crumbling platform collapses after being stood on")
+
+	# --- World 4 mechanics (PG-54) ---
+	# Low gravity: the same airtime accumulates less downward speed.
+	var gp_full: Player = load("res://scenes/player.tscn").instantiate()
+	gp_full.position = Vector2(2600, 100)  # open space, no floor
+	add_child(gp_full)
+	GameManager.gravity_scale = 1.0
+	await _wait_frames(10)
+	var vy_full := gp_full.velocity.y
+	var gp_low: Player = load("res://scenes/player.tscn").instantiate()
+	gp_low.position = Vector2(2650, 100)
+	add_child(gp_low)
+	GameManager.gravity_scale = 0.55
+	await _wait_frames(10)
+	var vy_low := gp_low.velocity.y
+	_check(vy_low > 0.0 and vy_low < vy_full, "low gravity falls slower than normal")
+
+	# Alien reuses the walker enemy with a space skin.
+	var alien: CharacterBody2D = load("res://scenes/alien.tscn").instantiate()
+	add_child(alien)
+	var alien_tex: AtlasTexture = alien.get_node("AnimatedSprite2D").sprite_frames.get_frame_texture("walk", 0)
+	_check(alien_tex.atlas.resource_path.ends_with("alien.png"),
+			"alien wears the alien skin on the walker enemy")
+
+	# Meteor kills on contact.
+	GameManager.gravity_scale = 1.0
+	_check(await _hazard_kills("res://scenes/meteor.tscn", Vector2(2700, 300)),
+			"meteor kills the player on contact")
+
+	# Moving platform drifts and carries a rider standing on it.
+	var plat: AnimatableBody2D = load("res://scenes/moving_platform.tscn").instantiate()
+	plat.position = Vector2(2820, 320)
+	add_child(plat)
+	var rider: Player = load("res://scenes/player.tscn").instantiate()
+	rider.position = Vector2(2820, 300)  # above the platform; falls onto it
+	add_child(rider)
+	await _wait_frames(24)  # land on the platform
+	var rider_x0 := rider.global_position.x
+	var plat_x0 := plat.global_position.x
+	await _wait_frames(30)  # platform drifts, carrying the rider
+	var plat_dx := plat.global_position.x - plat_x0
+	var rider_dx := rider.global_position.x - rider_x0
+	_check(absf(plat_dx) > 3.0, "moving platform drifts horizontally")
+	_check(absf(rider_dx - plat_dx) < 8.0, "moving platform carries the rider along")
 
 	# --- Spike death (PG-16/PG-10) ---
 	var spikes: Area2D = load("res://scenes/spikes.tscn").instantiate()

@@ -35,9 +35,10 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	var gravity := get_gravity().y * GameManager.gravity_scale
 	if dying:
 		# Mario-style death hop: collisions are off, just fall out of view.
-		velocity.y += get_gravity().y * delta
+		velocity.y += gravity * delta
 		move_and_slide()
 		return
 
@@ -45,7 +46,7 @@ func _physics_process(delta: float) -> void:
 		_coyote_timer = COYOTE_TIME
 		_air_jumps_left = MAX_AIR_JUMPS
 	else:
-		velocity.y += get_gravity().y * delta
+		velocity.y += gravity * delta
 		_coyote_timer -= delta
 
 	if Input.is_action_just_pressed("jump"):

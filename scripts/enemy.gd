@@ -15,7 +15,7 @@ var direction := -1
 
 func _physics_process(delta: float) -> void:
 	if not is_on_floor():
-		velocity.y += get_gravity().y * delta
+		velocity.y += get_gravity().y * GameManager.gravity_scale * delta
 	elif wall_ray.is_colliding() or not floor_ray.is_colliding():
 		_turn()
 	velocity.x = direction * SPEED
