@@ -12,25 +12,26 @@ var _failures := 0
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 
-	# --- Level labels (PG-22) ---
+	# --- Level labels (PG-22, PG-53) ---
 	_check(GameManager.level_label() == "1-1", "first level is labeled 1-1")
-	_check(GameManager._level_labels.size() == 6, "six levels are registered")
-	_check(GameManager._level_labels[5] == "2-3", "last level is labeled 2-3")
+	_check(GameManager._level_labels.size() == 9, "nine levels are registered")
+	_check(GameManager._level_labels[8] == "3-3", "last level is labeled 3-3")
 
 	# --- Taller goal flag (PG-36) ---
 	_check(load("res://assets/flag.png").get_height() == 32, "goal flag art is two tiles tall")
 
-	# --- World map logic and screen (PG-37) ---
+	# --- World map logic and screen (PG-37, PG-53) ---
 	_check(GameManager.is_last_in_world(2), "1-3 is the last stage of world 1")
 	_check(not GameManager.is_last_in_world(3), "2-1 is not the last stage of a world")
 	_check(GameManager.is_last_in_world(5), "2-3 is the last stage of world 2")
+	_check(GameManager.is_last_in_world(8), "3-3 is the last stage of world 3")
 	GameManager.levels_completed = 3
 	GameManager.current_level = 2
 	var map: Control = load("res://scenes/world_map.tscn").instantiate()
 	add_child(map)
 	await _wait_process_frames(2)
 	var map_box: VBoxContainer = map.get_node("%MapBox")
-	_check(map_box.get_child_count() == 2, "world map has a row per world")
+	_check(map_box.get_child_count() == 3, "world map has a row per world")
 	_check(map_box.get_child(0).get_child_count() == 4, "world row lists its three stages")
 	map.queue_free()
 	GameManager.levels_completed = 0
@@ -114,6 +115,59 @@ func _ready() -> void:
 	await _wait_process_frames(3)
 	_check(not get_tree().paused, "ESC again resumes the game")
 
+	# --- World 3 mechanics (PG-53) ---
+	# Keep hazard deaths from depleting lives into a game-over scene change.
+	GameManager.lives = 99
+
+	# Bat: flying patrol reverses at its span and bobs vertically. Placed
+	# in open space (isolated coords) with no walls, so it turns at ±span.
+	var bat: CharacterBody2D = load("res://scenes/bat.tscn").instantiate()
+	bat.position = Vector2(2000, 200)
+	add_child(bat)
+	await _wait_frames(2)
+	var bat_dir0: int = bat.direction
+	var bat_min_y := bat.global_position.y
+	var bat_max_y := bat.global_position.y
+	var bat_turned := false
+	for i in 140:
+		await get_tree().physics_frame
+		if bat.direction != bat_dir0:
+			bat_turned = true
+		bat_min_y = minf(bat_min_y, bat.global_position.y)
+		bat_max_y = maxf(bat_max_y, bat.global_position.y)
+	_check(bat_turned, "bat reverses at its patrol span")
+	_check(bat_max_y - bat_min_y > 4.0, "bat bobs vertically")
+
+	# Lava kills on contact.
+	_check(await _hazard_kills("res://scenes/lava.tscn", Vector2(2100, 300)),
+			"lava kills the player on contact")
+
+	# Stalactite drops once the player passes beneath its tip.
+	var stal: Area2D = load("res://scenes/stalactite.tscn").instantiate()
+	stal.position = Vector2(2200, 200)
+	add_child(stal)
+	var under: Player = load("res://scenes/player.tscn").instantiate()
+	under.position = Vector2(2200, 260)  # below the tip, inside the drop zone
+	add_child(under)
+	await _wait_frames(6)
+	_check(stal._falling, "stalactite drops when the player passes beneath")
+
+	# Stalactite kills on contact.
+	_check(await _hazard_kills("res://scenes/stalactite.tscn", Vector2(2300, 300)),
+			"stalactite kills the player on contact")
+
+	# Crumbling platform: solid, then collapses after being stood on.
+	var crumble: StaticBody2D = load("res://scenes/crumbling.tscn").instantiate()
+	crumble.position = Vector2(2400, 300)
+	add_child(crumble)
+	await _wait_frames(2)
+	_check(not crumble.col.disabled, "crumbling platform starts solid")
+	var stander: Player = load("res://scenes/player.tscn").instantiate()
+	stander.position = Vector2(2400, 284)  # one tile above; falls onto it
+	add_child(stander)
+	await _wait_frames(55)  # land + shake (0.4s) + collapse
+	_check(crumble.col.disabled, "crumbling platform collapses after being stood on")
+
 	# --- Spike death (PG-16/PG-10) ---
 	var spikes: Area2D = load("res://scenes/spikes.tscn").instantiate()
 	spikes.position = Vector2(480, 104)  # empty, flat spot in level 1
@@ -149,6 +203,21 @@ func _press_action(action: String) -> void:
 		event.action = action
 		event.pressed = pressed
 		Input.parse_input_event(event)
+
+
+## Spawns a hazard scene and a fresh player overlapping it; returns
+## whether contact put the player into its dying state. Nodes are left
+## in the tree (their death coroutines hold references), which is fine
+## for a short-lived headless run at isolated coordinates.
+func _hazard_kills(scene_path: String, pos: Vector2) -> bool:
+	var hazard := load(scene_path).instantiate() as Node2D
+	hazard.position = pos
+	add_child(hazard)
+	var victim: Player = load("res://scenes/player.tscn").instantiate()
+	victim.position = pos
+	add_child(victim)
+	await _wait_frames(8)
+	return victim.dying
 
 
 func _find_by_scene(root: Node, scene_path: String) -> Node:

@@ -7,6 +7,8 @@ extends Node2D
 ##   P  player start        C  coin
 ##   E  enemy               S  spikes
 ##   K  checkpoint          F  goal flag
+##   L  lava (World 3)      V  bat (World 3)
+##   T  stalactite (W3)     X  crumbling platform (W3)
 ##   .  empty
 
 const TILE := 16
@@ -20,18 +22,26 @@ const ENEMY_SCENE := preload("res://scenes/enemy.tscn")
 const SPIKES_SCENE := preload("res://scenes/spikes.tscn")
 const FLAG_SCENE := preload("res://scenes/flag.tscn")
 const CHECKPOINT_SCENE := preload("res://scenes/checkpoint.tscn")
+const LAVA_SCENE := preload("res://scenes/lava.tscn")
+const BAT_SCENE := preload("res://scenes/bat.tscn")
+const STALACTITE_SCENE := preload("res://scenes/stalactite.tscn")
+const CRUMBLING_SCENE := preload("res://scenes/crumbling.tscn")
 const HUD_SCENE := preload("res://scenes/hud.tscn")
 const PAUSE_MENU_SCENE := preload("res://scenes/pause_menu.tscn")
 const CLOUDS_TEXTURE := preload("res://assets/clouds.png")
+const CRYSTALS_TEXTURE := preload("res://assets/crystals.png")
 
 ## Set by subclasses in _init().
 var layout := ""
 
-## Per-world theming (PG-32): World 2 levels override these for a
+## Per-world theming (PG-32): World 2+ levels override these for a
 ## darker palette without needing separate tile art.
 var sky_color := Color(0.43, 0.72, 0.91)
 var tile_tint := Color.WHITE
 var cloud_tint := Color.WHITE
+## Background dressing: "clouds" (default) or "cave" — the crystal
+## backdrop used by World 3 (PG-53). Worlds without a sky pass "".
+var decor := "clouds"
 
 var _player: Player
 var _kill_y := 0.0
@@ -42,7 +52,7 @@ var _kill_y := 0.0
 func _ready() -> void:
 	RenderingServer.set_default_clear_color(sky_color)
 	tiles.modulate = tile_tint
-	_add_clouds()
+	_add_backdrop()
 	GameManager.register_level(scene_file_path)
 	_build()
 	add_child(HUD_SCENE.instantiate())
@@ -56,9 +66,19 @@ func _physics_process(_delta: float) -> void:
 		_player.die()
 
 
-## Two looping cloud layers at different scroll speeds and sizes give
-## the background depth (PG-31).
-func _add_clouds() -> void:
+## Two looping parallax layers at different scroll speeds and sizes give
+## the background depth. Clouds for the surface worlds (PG-31); a
+## glowing-crystal backdrop for the World 3 caves (PG-53).
+func _add_backdrop() -> void:
+	var texture: Texture2D
+	match decor:
+		"clouds":
+			texture = CLOUDS_TEXTURE
+		"cave":
+			texture = CRYSTALS_TEXTURE
+		_:
+			return  # no sky backdrop for this world
+
 	var background := ParallaxBackground.new()
 	for config in [
 		{"speed": 0.2, "y": 10.0, "scale": 1.0, "alpha": 0.65},
@@ -66,14 +86,14 @@ func _add_clouds() -> void:
 	]:
 		var layer := ParallaxLayer.new()
 		layer.motion_scale = Vector2(config.speed, 0.1)
-		layer.motion_mirroring = Vector2(CLOUDS_TEXTURE.get_width() * config.scale, 0)
-		var cloud_sprite := Sprite2D.new()
-		cloud_sprite.texture = CLOUDS_TEXTURE
-		cloud_sprite.centered = false
-		cloud_sprite.position = Vector2(0, config.y)
-		cloud_sprite.scale = Vector2(config.scale, config.scale)
-		cloud_sprite.modulate = Color(cloud_tint, config.alpha)
-		layer.add_child(cloud_sprite)
+		layer.motion_mirroring = Vector2(texture.get_width() * config.scale, 0)
+		var backdrop := Sprite2D.new()
+		backdrop.texture = texture
+		backdrop.centered = false
+		backdrop.position = Vector2(0, config.y)
+		backdrop.scale = Vector2(config.scale, config.scale)
+		backdrop.modulate = Color(cloud_tint, config.alpha)
+		layer.add_child(backdrop)
 		background.add_child(layer)
 	add_child(background)
 
@@ -143,6 +163,15 @@ func _place(ch: String, cell: Vector2i) -> void:
 			_spawn(FLAG_SCENE, pos)
 		"K":
 			_spawn(CHECKPOINT_SCENE, pos)
+		"L":
+			_spawn(LAVA_SCENE, pos)
+		"V":
+			_spawn(BAT_SCENE, pos)
+		"T":
+			_spawn(STALACTITE_SCENE, pos)
+		"X":
+			# Crumbling platform is its own solid body, so no tile here.
+			_spawn(CRUMBLING_SCENE, pos)
 		"P":
 			_player = PLAYER_SCENE.instantiate()
 			_player.position = pos

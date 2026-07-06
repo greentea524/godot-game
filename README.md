@@ -3,8 +3,9 @@
 A 2D platformer built with Godot 4 (GL Compatibility renderer). Implements the
 Jira project **PG**: player movement with coyote time, variable jump height and
 a double jump, stompable patrolling enemies, spikes and fall hazards, coins,
-checkpoints, six levels across two worlds, sound effects, parallax cloud
-backgrounds, avatar selection, a pause menu, and full menu/game flow.
+checkpoints, nine levels across three worlds, World 3 cave hazards (lava, bats,
+falling stalactites, crumbling platforms), sound effects, parallax backgrounds,
+avatar selection, a pause menu, and full menu/game flow.
 
 ## Controls
 
@@ -18,21 +19,24 @@ backgrounds, avatar selection, a pause menu, and full menu/game flow.
 
 ```
 assets/    sprites + sfx (generated placeholders) + tileset.tres
-scenes/    reusable scenes: player, enemy, coin, spikes, flag, checkpoint, HUD, menus
+scenes/    reusable scenes: player, enemy, bat, coin, spikes, lava, stalactite,
+           crumbling, flag, checkpoint, HUD, menus
 scripts/   GDScript; scripts/levels/ holds the per-level layout scripts
-levels/    the six playable level scenes (worlds 1 and 2)
+levels/    the nine playable level scenes (worlds 1-3)
 ```
 
 Levels are grouped into worlds in `GameManager.WORLDS`; the HUD shows the
-current level as world-stage (1-1 ... 2-3). World 2 levels reuse the same
-tileset with color tints for a darker theme. The player's avatar (3 choices
-on the main menu) persists for the session.
+current level as world-stage (1-1 ... 3-3). World 2 (dusk) and World 3 (cave)
+reuse the same tileset with color tints and swap the sky backdrop
+(`decor`: clouds vs. crystal cave). The player's avatar (3 choices on the main
+menu) persists for the session.
 
 ## How levels work
 
 Levels are defined as ASCII layouts in `scripts/levels/level_*.gd` and built at
 runtime by `scripts/level.gd` onto a `TileMapLayer`. Legend: `G` grass ground
-(dirt auto-fills below), `D` dirt, `B` block/platform, `P` player start,
+(dirt auto-fills below), `D` dirt, `B` block/platform, `L` lava, `V` bat,
+`T` stalactite, `X` crumbling platform, `P` player start,
 `C` coin, `E` enemy, `S` spikes, `K` checkpoint, `F` goal flag.
 
 `scripts/game_manager.gd` is autoloaded and owns coins, lives, checkpoints,

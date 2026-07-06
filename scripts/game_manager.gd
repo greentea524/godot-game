@@ -19,6 +19,11 @@ const WORLDS: Array = [
 		"res://levels/level_2_2.tscn",
 		"res://levels/level_2_3.tscn",
 	],
+	[
+		"res://levels/level_3_1.tscn",
+		"res://levels/level_3_2.tscn",
+		"res://levels/level_3_3.tscn",
+	],
 ]
 const START_LIVES := 3
 
