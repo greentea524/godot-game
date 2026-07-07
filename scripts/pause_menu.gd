@@ -8,6 +8,7 @@ func _ready() -> void:
 	visible = false
 	%ResumeButton.pressed.connect(_resume)
 	%RestartButton.pressed.connect(_restart)
+	%MapButton.pressed.connect(_map)
 	%QuitButton.pressed.connect(_quit)
 
 
@@ -33,6 +34,11 @@ func _resume() -> void:
 func _restart() -> void:
 	_resume()
 	GameManager.goto_level(GameManager.current_level)
+
+
+func _map() -> void:
+	_resume()
+	GameManager.world_map()
 
 
 func _quit() -> void:

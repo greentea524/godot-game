@@ -96,6 +96,10 @@ func main_menu() -> void:
 	_change_scene("res://scenes/main_menu.tscn")
 
 
+func world_map() -> void:
+	_change_scene("res://scenes/world_map.tscn")
+
+
 func open_multiplayer() -> void:
 	_change_scene("res://scenes/multiplayer_lobby.tscn")
 
