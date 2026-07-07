@@ -111,14 +111,16 @@ func _spawn_meteor() -> void:
 ## the background depth. Clouds for the surface worlds (PG-31); a
 ## glowing-crystal backdrop for the World 3 caves (PG-53).
 func _add_backdrop() -> void:
+	if decor == "space":
+		_add_space_backdrop()
+		return
+		
 	var texture: Texture2D
 	match decor:
 		"clouds":
 			texture = CLOUDS_TEXTURE
 		"cave":
 			texture = CRYSTALS_TEXTURE
-		"space":
-			texture = STARS_TEXTURE
 		_:
 			return  # no sky backdrop for this world
 
@@ -138,6 +140,38 @@ func _add_backdrop() -> void:
 		backdrop.modulate = Color(cloud_tint, config.alpha)
 		layer.add_child(backdrop)
 		background.add_child(layer)
+	add_child(background)
+
+func _add_space_backdrop() -> void:
+	var background := ParallaxBackground.new()
+	
+	# Stars (slowest)
+	var layer_stars := ParallaxLayer.new()
+	layer_stars.motion_scale = Vector2(0.1, 0.1)
+	layer_stars.motion_mirroring = Vector2(1000, 800)
+	var stars = load("res://scripts/space_decor.gd").new()
+	stars.kind = "stars"
+	layer_stars.add_child(stars)
+	background.add_child(layer_stars)
+
+	# Planets (mid)
+	var layer_planets := ParallaxLayer.new()
+	layer_planets.motion_scale = Vector2(0.3, 0.3)
+	layer_planets.motion_mirroring = Vector2(1000, 800)
+	var planets = load("res://scripts/space_decor.gd").new()
+	planets.kind = "planets"
+	layer_planets.add_child(planets)
+	background.add_child(layer_planets)
+
+	# Debris (fastest)
+	var layer_debris := ParallaxLayer.new()
+	layer_debris.motion_scale = Vector2(0.6, 0.6)
+	layer_debris.motion_mirroring = Vector2(1000, 800)
+	var debris = load("res://scripts/space_decor.gd").new()
+	debris.kind = "debris"
+	layer_debris.add_child(debris)
+	background.add_child(layer_debris)
+	
 	add_child(background)
 
 
@@ -160,6 +194,8 @@ func _build() -> void:
 	_add_boundaries(width, lines.size())
 	if ground_decor != "":
 		_add_ground_decor(width, lines.size())
+	if decor == "cave":
+		_add_cave_decor(width, lines.size())
 	if _player == null:
 		push_warning("Level layout has no player start ('P').")
 		return
@@ -224,6 +260,15 @@ func _add_ground_decor(width: int, rows: int) -> void:
 	add_child(decor)
 	decor.queue_redraw()
 
+func _add_cave_decor(width: int, rows: int) -> void:
+	var cave = load("res://scripts/cave_decor.gd").new()
+	cave.width_tiles = width
+	cave.height_tiles = rows
+	cave.tiles = tiles
+	cave.z_index = -1
+	add_child(cave)
+	cave.queue_redraw()
+
 
 func _place(ch: String, cell: Vector2i) -> void:
 	var pos := Vector2(cell.x * TILE + TILE / 2.0, cell.y * TILE + TILE / 2.0)
@@ -237,31 +282,32 @@ func _place(ch: String, cell: Vector2i) -> void:
 		"B":
 			tiles.set_cell(cell, 0, BLOCK)
 		"C":
-			_spawn(COIN_SCENE, pos)
+			_spawn(COIN_SCENE, pos, "Coin", cell)
 		"E":
-			_spawn(ENEMY_SCENE, pos)
+			_spawn(ENEMY_SCENE, pos, "Enemy", cell)
 		"S":
-			_spawn(SPIKES_SCENE, pos)
+			_spawn(SPIKES_SCENE, pos, "Spikes", cell)
 		"F":
-			_spawn(FLAG_SCENE, pos)
+			_spawn(FLAG_SCENE, pos, "Flag", cell)
 		"K":
-			_spawn(CHECKPOINT_SCENE, pos)
+			_spawn(CHECKPOINT_SCENE, pos, "Checkpoint", cell)
 		"L":
-			_spawn(LAVA_SCENE, pos)
+			_spawn(LAVA_SCENE, pos, "Lava", cell)
 		"V":
-			_spawn(BAT_SCENE, pos)
+			_spawn(BAT_SCENE, pos, "Bat", cell)
 		"T":
-			_spawn(STALACTITE_SCENE, pos)
+			_spawn(STALACTITE_SCENE, pos, "Stalactite", cell)
 		"X":
 			# Crumbling platform is its own solid body, so no tile here.
-			_spawn(CRUMBLING_SCENE, pos)
+			_spawn(CRUMBLING_SCENE, pos, "Crumbling", cell)
 		"A":
-			_spawn(ALIEN_SCENE, pos)
+			_spawn(ALIEN_SCENE, pos, "Alien", cell)
 		"M":
-			_spawn(MOVING_PLATFORM_SCENE, pos)
+			_spawn(MOVING_PLATFORM_SCENE, pos, "MovingPlatform", cell)
 		"P":
 			_player = PLAYER_SCENE.instantiate()
 			_player.position = pos
+			_player.name = "Player_Local"
 			add_child(_player)
 			GameManager.set_checkpoint(pos)
 			# In a race, this is the local avatar we broadcast (PG-51).
@@ -269,7 +315,8 @@ func _place(ch: String, cell: Vector2i) -> void:
 				Net.local_player = _player
 
 
-func _spawn(scene: PackedScene, pos: Vector2) -> void:
+func _spawn(scene: PackedScene, pos: Vector2, node_prefix: String, cell: Vector2i) -> void:
 	var node := scene.instantiate() as Node2D
+	node.name = "%s_%d_%d" % [node_prefix, cell.x, cell.y]
 	node.position = pos
 	add_child(node)

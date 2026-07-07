@@ -16,10 +16,14 @@ var _state := State.IDLE
 
 func _on_stand_zone_body_entered(body: Node2D) -> void:
 	if _state == State.IDLE and body is Player:
-		_shake()
+		if Net.active:
+			rpc("shake")
+		else:
+			shake()
 
 
-func _shake() -> void:
+@rpc("any_peer", "call_local", "reliable")
+func shake() -> void:
 	_state = State.SHAKING
 	var tween := create_tween()
 	# Rapid horizontal jitter for the shake duration.

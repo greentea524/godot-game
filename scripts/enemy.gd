@@ -38,12 +38,16 @@ func _on_hitbox_body_entered(body: Node2D) -> void:
 	# Stomp: player moving down and clearly above the enemy's center.
 	if player.velocity.y > 0.0 and player.global_position.y < global_position.y - 2.0:
 		player.bounce()
-		_squash()
+		if Net.active:
+			rpc("squash")
+		else:
+			squash()
 	else:
 		player.die()
 
 
-func _squash() -> void:
+@rpc("any_peer", "call_local", "reliable")
+func squash() -> void:
 	# Sfx autoload so the sound survives this node being freed (PG-26).
 	Sfx.play_sfx("stomp")
 	set_physics_process(false)

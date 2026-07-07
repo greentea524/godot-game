@@ -2,6 +2,28 @@ extends Control
 ## Main menu (PG-17): title, Start button, instructions, and the
 ## avatar selection row (PG-30).
 
+const WORLDS = [
+	{
+		"name": "World 1 – Grasslands",
+		"icon_color": Color(0.35, 0.69, 0.27),
+		"desc": "A bright and sunny adventure through open fields and rolling hills. The perfect place to find your footing."
+	},
+	{
+		"name": "World 2 – Dark Forest",
+		"icon_color": Color(0.14, 0.23, 0.16),
+		"desc": "The trees grow tall and the path grows narrow. Watch your step — enemies lurk in the shadows."
+	},
+	{
+		"name": "World 3 – Underworld",
+		"icon_color": Color(0.7, 0.2, 0.1),
+		"desc": "Deep beneath the surface lies a world of lava, caves, and darkness. Only the brave survive."
+	},
+	{
+		"name": "World 4 – Space",
+		"icon_color": Color(0.1, 0.1, 0.3),
+		"desc": "Gravity is just a suggestion up here. Jump between asteroids and dodge meteors in the final frontier."
+	}
+]
 
 func _ready() -> void:
 	var start: Button = %StartButton
@@ -9,6 +31,60 @@ func _ready() -> void:
 	start.grab_focus()
 	%MultiplayerButton.pressed.connect(GameManager.open_multiplayer)
 	_build_avatar_row()
+	_build_world_preview()
+
+
+func _build_world_preview() -> void:
+	var row: HBoxContainer = %WorldPreviewRow
+	for i in WORLDS.size():
+		var w = WORLDS[i]
+		
+		var panel = PanelContainer.new()
+		panel.custom_minimum_size = Vector2(250, 80)
+		
+		var style = StyleBoxFlat.new()
+		style.bg_color = Color(0.15, 0.18, 0.25)
+		style.set_corner_radius_all(8)
+		style.content_margin_left = 10
+		style.content_margin_right = 10
+		style.content_margin_top = 8
+		style.content_margin_bottom = 8
+		panel.add_theme_stylebox_override("panel", style)
+		
+		var hbox = HBoxContainer.new()
+		hbox.add_theme_constant_override("separation", 10)
+		panel.add_child(hbox)
+		
+		var icon = ColorRect.new()
+		icon.custom_minimum_size = Vector2(12, 0)
+		icon.color = w["icon_color"]
+		hbox.add_child(icon)
+		
+		var vbox = VBoxContainer.new()
+		vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		hbox.add_child(vbox)
+		
+		var title = Label.new()
+		title.text = w["name"]
+		title.add_theme_font_size_override("font_size", 14)
+		title.add_theme_color_override("font_color", w["icon_color"].lightened(0.5))
+		vbox.add_child(title)
+		
+		var desc = Label.new()
+		desc.text = w["desc"]
+		desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		desc.add_theme_font_size_override("font_size", 11)
+		desc.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
+		desc.custom_minimum_size = Vector2(190, 45)
+		vbox.add_child(desc)
+		
+		# Lock Worlds beyond the player's progress
+		var max_world := GameManager.world_of(clampi(GameManager.levels_completed, 0, GameManager.level_count() - 1))
+		if i > max_world:
+			title.text += " [LOCKED]"
+			title.add_theme_color_override("font_color", Color(0.9, 0.4, 0.4))
+		
+		row.add_child(panel)
 
 
 ## One toggle button per avatar, showing its idle frame. The selection
@@ -21,7 +97,7 @@ func _build_avatar_row() -> void:
 		button.toggle_mode = true
 		button.button_group = group
 		button.button_pressed = i == GameManager.selected_avatar
-		button.custom_minimum_size = Vector2(52, 52)
+		button.custom_minimum_size = Vector2(40, 40)
 		button.tooltip_text = GameManager.AVATAR_NAMES[i]
 		var icon := AtlasTexture.new()
 		icon.atlas = load(GameManager.AVATAR_SHEETS[i])

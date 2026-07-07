@@ -38,8 +38,11 @@ const AVATAR_SHEETS: Array[String] = [
 	"res://assets/player.png",
 	"res://assets/player2.png",
 	"res://assets/player3.png",
+	"res://assets/player4.png",
+	"res://assets/player5.png",
+	"res://assets/player6.png",
 ]
-const AVATAR_NAMES: Array[String] = ["Blue", "Green", "Orange"]
+const AVATAR_NAMES: Array[String] = ["Blue", "Green", "Orange", "Yellow", "Purple", "Pink"]
 
 var coins := 0
 var lives := START_LIVES

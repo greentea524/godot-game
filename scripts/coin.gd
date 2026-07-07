@@ -5,6 +5,13 @@ extends Area2D
 func _on_body_entered(body: Node2D) -> void:
 	if body is not Player or (body as Player).dying:
 		return
+	if Net.active:
+		rpc("collect")
+	else:
+		collect()
+
+@rpc("any_peer", "call_local", "reliable")
+func collect() -> void:
 	GameManager.add_coin()
 	set_deferred("monitoring", false)
 	# Pickup sound plays from the coin itself before it is freed (PG-25);

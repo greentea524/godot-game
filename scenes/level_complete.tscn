@@ -43,6 +43,14 @@ theme_override_font_sizes/font_size = 16
 horizontal_alignment = 1
 text = "Coins collected: 0"
 
+[node name="ProgressCenter" type="CenterContainer" parent="Center/VBox"]
+layout_mode = 2
+
+[node name="ProgressRow" type="HBoxContainer" parent="Center/VBox/ProgressCenter"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 0
+
 [node name="NextButton" type="Button" parent="Center/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
