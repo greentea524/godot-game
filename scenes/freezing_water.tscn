@@ -1,0 +1,22 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/freezing_water.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/lava.png" id="2_tex"]
+
+[sub_resource type="RectangleShape2D" id="shape_lava"]
+size = Vector2(16, 12)
+
+[node name="FreezingWater" type="Area2D"]
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("1_script")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_tex")
+modulate = Color(0.2, 0.6, 1.0, 1.0)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, 2)
+shape = SubResource("shape_lava")
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]

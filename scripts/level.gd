@@ -30,6 +30,11 @@ const CRUMBLING_SCENE := preload("res://scenes/crumbling.tscn")
 const ALIEN_SCENE := preload("res://scenes/alien.tscn")
 const MOVING_PLATFORM_SCENE := preload("res://scenes/moving_platform.tscn")
 const METEOR_SCENE := preload("res://scenes/meteor.tscn")
+const FREEZING_WATER_SCENE := preload("res://scenes/freezing_water.tscn")
+const YETI_SCENE := preload("res://scenes/yeti.tscn")
+const DRONE_SCENE := preload("res://scenes/drone.tscn")
+const LASER_SCENE := preload("res://scenes/laser.tscn")
+const CONVEYOR_SCENE := preload("res://scenes/conveyor.tscn")
 const HUD_SCENE := preload("res://scenes/hud.tscn")
 const PAUSE_MENU_SCENE := preload("res://scenes/pause_menu.tscn")
 const GHOST_SCENE := preload("res://scenes/ghost.tscn")
@@ -59,6 +64,8 @@ var meteors := false
 ## Ground scenery for the surface worlds (PG-55): "grassland" (World 1),
 ## "forest" (World 2), or "" for none. Purely decorative, behind tiles.
 var ground_decor := ""
+## Ice level flag (World 5). Changes player friction.
+var ice := false
 
 var _player: Player
 var _kill_y := 0.0
@@ -73,6 +80,7 @@ var _ghosts := {}
 func _ready() -> void:
 	RenderingServer.set_default_clear_color(sky_color)
 	GameManager.gravity_scale = gravity_scale
+	GameManager.ice_physics = ice
 	tiles.modulate = tile_tint
 	_add_backdrop()
 	GameManager.register_level(scene_file_path)
@@ -117,7 +125,7 @@ func _add_backdrop() -> void:
 		
 	var texture: Texture2D
 	match decor:
-		"clouds":
+		"clouds", "ice":
 			texture = CLOUDS_TEXTURE
 		"cave":
 			texture = CRYSTALS_TEXTURE
@@ -304,6 +312,32 @@ func _place(ch: String, cell: Vector2i) -> void:
 			_spawn(ALIEN_SCENE, pos, "Alien", cell)
 		"M":
 			_spawn(MOVING_PLATFORM_SCENE, pos, "MovingPlatform", cell)
+		"I":
+			tiles.set_cell(cell, 0, GRASS)
+			tiles.set_cell(cell + Vector2i(0, 1), 0, DIRT)
+			tiles.set_cell(cell + Vector2i(0, 2), 0, DIRT)
+		"W":
+			_spawn(FREEZING_WATER_SCENE, pos, "FreezingWater", cell)
+		"Y":
+			_spawn(YETI_SCENE, pos, "Yeti", cell)
+		"Z":
+			_spawn(LASER_SCENE, pos, "Laser", cell)
+		"R":
+			_spawn(DRONE_SCENE, pos, "Drone", cell)
+		">":
+			tiles.set_cell(cell, 0, BLOCK)
+			var node := CONVEYOR_SCENE.instantiate() as Node2D
+			node.dir = 1
+			node.name = "ConveyorR_%d_%d" % [cell.x, cell.y]
+			node.position = pos
+			add_child(node)
+		"<":
+			tiles.set_cell(cell, 0, BLOCK)
+			var node := CONVEYOR_SCENE.instantiate() as Node2D
+			node.dir = -1
+			node.name = "ConveyorL_%d_%d" % [cell.x, cell.y]
+			node.position = pos
+			add_child(node)
 		"P":
 			_player = PLAYER_SCENE.instantiate()
 			_player.position = pos

@@ -1,0 +1,66 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemy.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/enemy.png" id="2_sheet"]
+
+[sub_resource type="AtlasTexture" id="at_walk0"]
+atlas = ExtResource("2_sheet")
+region = Rect2(0, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="at_walk1"]
+atlas = ExtResource("2_sheet")
+region = Rect2(16, 0, 16, 16)
+
+[sub_resource type="SpriteFrames" id="sf_enemy"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("at_walk0")
+}, {
+"duration": 1.0,
+"texture": SubResource("at_walk1")
+}],
+"loop": true,
+"name": &"walk",
+"speed": 6.0
+}]
+
+[sub_resource type="RectangleShape2D" id="shape_body"]
+size = Vector2(12, 10)
+
+[sub_resource type="RectangleShape2D" id="shape_hitbox"]
+size = Vector2(14, 12)
+
+[node name="Yeti" type="CharacterBody2D"]
+collision_layer = 4
+collision_mask = 1
+script = ExtResource("1_script")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("sf_enemy")
+animation = &"walk"
+autoplay = "walk"
+scale = Vector2(1.2, 1.2)
+modulate = Color(0.8, 1.0, 1.0, 1.0)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, 3)
+shape = SubResource("shape_body")
+
+[node name="FloorRay" type="RayCast2D" parent="."]
+position = Vector2(-6, 2)
+target_position = Vector2(0, 12)
+
+[node name="WallRay" type="RayCast2D" parent="."]
+position = Vector2(0, 4)
+target_position = Vector2(-7, 0)
+
+[node name="Hitbox" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox"]
+position = Vector2(0, 2)
+shape = SubResource("shape_hitbox")
+
+[connection signal="body_entered" from="Hitbox" to="." method="_on_hitbox_body_entered"]

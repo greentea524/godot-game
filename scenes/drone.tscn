@@ -1,0 +1,52 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/bat.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/bat.png" id="2_sheet"]
+
+[sub_resource type="AtlasTexture" id="at_flap0"]
+atlas = ExtResource("2_sheet")
+region = Rect2(0, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="at_flap1"]
+atlas = ExtResource("2_sheet")
+region = Rect2(16, 0, 16, 16)
+
+[sub_resource type="SpriteFrames" id="sf_bat"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("at_flap0")
+}, {
+"duration": 1.0,
+"texture": SubResource("at_flap1")
+}],
+"loop": true,
+"name": &"fly",
+"speed": 8.0
+}]
+
+[sub_resource type="RectangleShape2D" id="shape_hitbox"]
+size = Vector2(12, 8)
+
+[node name="Drone" type="CharacterBody2D"]
+collision_layer = 4
+collision_mask = 1
+script = ExtResource("1_script")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("sf_bat")
+animation = &"fly"
+autoplay = "fly"
+modulate = Color(0.9, 0.4, 0.4, 1.0)
+
+[node name="WallRay" type="RayCast2D" parent="."]
+target_position = Vector2(-7, 0)
+
+[node name="Hitbox" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox"]
+shape = SubResource("shape_hitbox")
+
+[connection signal="body_entered" from="Hitbox" to="." method="_on_hitbox_body_entered"]

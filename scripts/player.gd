@@ -74,7 +74,13 @@ func _physics_process(delta: float) -> void:
 		velocity.y *= JUMP_CUT_MULTIPLIER
 
 	var direction := Input.get_axis("move_left", "move_right")
-	velocity.x = direction * SPEED
+	if GameManager.ice_physics and is_on_floor():
+		if direction != 0.0:
+			velocity.x = move_toward(velocity.x, direction * SPEED, 200.0 * delta)
+		else:
+			velocity.x = move_toward(velocity.x, 0, 100.0 * delta)
+	else:
+		velocity.x = direction * SPEED
 
 	move_and_slide()
 	_update_animation(direction)

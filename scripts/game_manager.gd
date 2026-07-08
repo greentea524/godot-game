@@ -29,6 +29,16 @@ const WORLDS: Array = [
 		"res://levels/level_4_2.tscn",
 		"res://levels/level_4_3.tscn",
 	],
+	[
+		"res://levels/level_5_1.tscn",
+		"res://levels/level_5_2.tscn",
+		"res://levels/level_5_3.tscn",
+	],
+	[
+		"res://levels/level_6_1.tscn",
+		"res://levels/level_6_2.tscn",
+		"res://levels/level_6_3.tscn",
+	],
 ]
 const START_LIVES := 3
 
@@ -54,6 +64,8 @@ var levels_completed := 0
 ## Gravity multiplier for the current level; World 4 uses 0.55 for
 ## floaty low-gravity jumps (PG-54). Each level sets this on load.
 var gravity_scale := 1.0
+## Ice physics flag (World 5). Each level sets this on load.
+var ice_physics := false
 
 var _level_paths: Array[String] = []
 var _level_labels: Array[String] = []
