@@ -32,8 +32,8 @@ func _ready() -> void:
 
 	# --- Level labels (PG-22, PG-53, PG-54) ---
 	_check(GameManager.level_label() == "1-1", "first level is labeled 1-1")
-	_check(GameManager._level_labels.size() == 12, "twelve levels are registered")
-	_check(GameManager._level_labels[11] == "4-3", "last level is labeled 4-3")
+	_check(GameManager._level_labels.size() == 18, "eighteen levels are registered")
+	_check(GameManager._level_labels[17] == "6-3", "last level is labeled 6-3")
 
 	# --- Taller goal flag (PG-36) ---
 	_check(load("res://assets/flag.png").get_height() == 32, "goal flag art is two tiles tall")
@@ -50,7 +50,7 @@ func _ready() -> void:
 	add_child(map)
 	await _wait_process_frames(2)
 	var map_box: VBoxContainer = map.get_node("%MapBox")
-	_check(map_box.get_child_count() == 4, "world map has a row per world")
+	_check(map_box.get_child_count() == 6, "world map has a row per world")
 	_check(map_box.get_child(0).get_child_count() == 4, "world row lists its three stages")
 	map.queue_free()
 	GameManager.levels_completed = 0
@@ -69,7 +69,7 @@ func _ready() -> void:
 	var level: Node2D = load("res://levels/level_1.tscn").instantiate()
 	add_child(level)
 	await _wait_frames(5)
-	var player: Player = level.get_node("Player")
+	var player: Player = level.get_node("Player_Local")
 
 	# --- Ground decor (PG-55) ---
 	var decor := _find_decor(level)
@@ -196,6 +196,30 @@ func _ready() -> void:
 	# Stalactite kills on contact.
 	_check(await _hazard_kills("res://scenes/stalactite.tscn", Vector2(2300, 300)),
 			"stalactite kills the player on contact")
+
+	# Volcano erupts, lobbing lava rocks (PG-62).
+	var volcano: Node2D = load("res://scenes/volcano.tscn").instantiate()
+	volcano.position = Vector2(2500, 300)
+	add_child(volcano)
+	volcano._timer = 0.02  # force an eruption on the next frame
+	await _wait_frames(4)
+	var rocks := 0
+	for child in get_children():
+		if child.scene_file_path == "res://scenes/lava_rock.tscn":
+			rocks += 1
+	_check(rocks >= 2, "volcano erupts lava rocks")
+	volcano.queue_free()
+
+	# Lava rock kills on contact.
+	var rock: Area2D = load("res://scenes/lava_rock.tscn").instantiate()
+	rock.position = Vector2(2650, 300)
+	rock.start_y = 300.0  # so it does not cull before reaching the player
+	add_child(rock)
+	var rock_victim: Player = load("res://scenes/player.tscn").instantiate()
+	rock_victim.position = Vector2(2650, 300)
+	add_child(rock_victim)
+	await _wait_frames(6)
+	_check(rock_victim.dying, "lava rock kills the player on contact")
 
 	# Crumbling platform: solid, then collapses after being stood on.
 	var crumble: StaticBody2D = load("res://scenes/crumbling.tscn").instantiate()

@@ -9,6 +9,7 @@ extends Node2D
 ##   K  checkpoint          F  goal flag
 ##   L  lava (World 3)      V  bat (World 3)
 ##   T  stalactite (W3)     X  crumbling platform (W3)
+##   O  volcano (World 3)
 ##   A  alien (World 4)     M  moving platform (World 4)
 ##   .  empty
 
@@ -30,6 +31,7 @@ const CRUMBLING_SCENE := preload("res://scenes/crumbling.tscn")
 const ALIEN_SCENE := preload("res://scenes/alien.tscn")
 const MOVING_PLATFORM_SCENE := preload("res://scenes/moving_platform.tscn")
 const METEOR_SCENE := preload("res://scenes/meteor.tscn")
+const VOLCANO_SCENE := preload("res://scenes/volcano.tscn")
 const FREEZING_WATER_SCENE := preload("res://scenes/freezing_water.tscn")
 const YETI_SCENE := preload("res://scenes/yeti.tscn")
 const DRONE_SCENE := preload("res://scenes/drone.tscn")
@@ -305,6 +307,8 @@ func _place(ch: String, cell: Vector2i) -> void:
 			_spawn(BAT_SCENE, pos, "Bat", cell)
 		"T":
 			_spawn(STALACTITE_SCENE, pos, "Stalactite", cell)
+		"O":
+			_spawn(VOLCANO_SCENE, pos, "Volcano", cell)
 		"X":
 			# Crumbling platform is its own solid body, so no tile here.
 			_spawn(CRUMBLING_SCENE, pos, "Crumbling", cell)
