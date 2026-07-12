@@ -40,6 +40,11 @@ const CONVEYOR_SCENE := preload("res://scenes/conveyor.tscn")
 const HUD_SCENE := preload("res://scenes/hud.tscn")
 const PAUSE_MENU_SCENE := preload("res://scenes/pause_menu.tscn")
 const GHOST_SCENE := preload("res://scenes/ghost.tscn")
+const TUTORIAL_PROMPT_SCENE := preload("res://scenes/tutorial_prompt.tscn")
+
+## Double-jump tutorial trigger in level 1-1 (PG-65): world x the player
+## must reach before the hint shows. Reset each load, so it shows every run.
+const TUTORIAL_TRIGGER_X := 280.0
 const CLOUDS_TEXTURE := preload("res://assets/clouds.png")
 const CRYSTALS_TEXTURE := preload("res://assets/crystals.png")
 const STARS_TEXTURE := preload("res://assets/stars.png")
@@ -75,6 +80,9 @@ var _width := 0
 var _meteor_timer := 1.2
 ## peer_id -> Ghost node, in multiplayer races (PG-51).
 var _ghosts := {}
+## Level 1-1 double-jump tutorial banner + one-shot guard (PG-65).
+var _tutorial: TutorialPrompt = null
+var _tutorial_shown := false
 
 @onready var tiles: TileMapLayer = $TileMapLayer
 
@@ -89,6 +97,10 @@ func _ready() -> void:
 	_build()
 	add_child(HUD_SCENE.instantiate())
 	add_child(PAUSE_MENU_SCENE.instantiate())
+	# Double-jump tutorial banner, only in level 1-1 (PG-65).
+	if GameManager.current_level == 0:
+		_tutorial = TUTORIAL_PROMPT_SCENE.instantiate()
+		add_child(_tutorial)
 
 
 func _physics_process(delta: float) -> void:
@@ -96,6 +108,11 @@ func _physics_process(delta: float) -> void:
 	if is_instance_valid(_player) and not _player.dying \
 			and _player.global_position.y > _kill_y:
 		_player.die()
+	# Double-jump hint fires once the player advances past the trigger (PG-65).
+	if _tutorial != null and not _tutorial_shown and is_instance_valid(_player) \
+			and _player.global_position.x >= TUTORIAL_TRIGGER_X:
+		_tutorial_shown = true
+		_tutorial.show_message("Press Jump twice to Double Jump!")
 	if meteors:
 		_meteor_timer -= delta
 		if _meteor_timer <= 0.0:

@@ -71,6 +71,16 @@ func _ready() -> void:
 	await _wait_frames(5)
 	var player: Player = level.get_node("Player_Local")
 
+	# --- Double-jump tutorial in 1-1 (PG-65) ---
+	var tutorial: TutorialPrompt = _find_tutorial(level)
+	_check(tutorial != null, "level 1-1 has a double-jump tutorial prompt")
+	_check(not level._tutorial_shown, "tutorial hidden before the trigger point")
+	player.global_position.x = 300.0  # past TUTORIAL_TRIGGER_X (280)
+	await _wait_frames(3)
+	_check(level._tutorial_shown and tutorial != null \
+			and tutorial.label.text.contains("Double Jump"),
+			"double-jump tutorial appears past the trigger point")
+
 	# --- Ground decor (PG-55) ---
 	var decor := _find_decor(level)
 	_check(decor != null, "world 1 level has grassland ground decor")
@@ -333,6 +343,13 @@ func _hazard_kills(scene_path: String, pos: Vector2) -> bool:
 	add_child(victim)
 	await _wait_frames(8)
 	return victim.dying
+
+
+func _find_tutorial(level: Node) -> TutorialPrompt:
+	for child in level.get_children():
+		if child is TutorialPrompt:
+			return child
+	return null
 
 
 func _find_decor(level: Node) -> GroundDecor:
