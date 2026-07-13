@@ -40,6 +40,10 @@ func _ready() -> void:
 	start.pressed.connect(GameManager.start_game)
 	start.grab_focus()
 	%MultiplayerButton.pressed.connect(GameManager.open_multiplayer)
+	%AchievementsButton.pressed.connect(func():
+		var ach_menu = preload("res://scenes/achievements_menu.tscn").instantiate()
+		add_child(ach_menu)
+	)
 	_build_avatar_row()
 	_build_world_preview()
 
@@ -136,5 +140,8 @@ func _build_avatar_row() -> void:
 		button.icon = icon
 		button.expand_icon = true
 		button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		button.pressed.connect(func() -> void: GameManager.selected_avatar = i)
+		button.pressed.connect(func() -> void: 
+			GameManager.selected_avatar = i
+			GameManager.track_avatar(i)
+		)
 		row.add_child(button)

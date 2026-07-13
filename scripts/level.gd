@@ -74,6 +74,8 @@ var ground_decor := ""
 ## Ice level flag (World 5). Changes player friction.
 var ice := false
 
+var level_time := 0.0
+
 var _player: Player
 var _kill_y := 0.0
 var _width := 0
@@ -254,7 +256,8 @@ func _add_boundaries(width: int, rows: int) -> void:
 ## Renders remote racers as ghosts each frame (PG-51). Ghosts have no
 ## collision, so the local simulation is unchanged; they simply follow
 ## the interpolated snapshots relayed through Net.
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	level_time += delta
 	if not Net.active:
 		return
 	var peers := Net.remote_peers()

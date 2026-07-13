@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+﻿[gd_scene load_steps=2 format=3]
 
 [ext_resource type="Script" path="res://scripts/hud.gd" id="1_script"]
+[ext_resource type="Script" path="res://scripts/progress_bar.gd" id="2_script"]
 
 [node name="HUD" type="CanvasLayer"]
 script = ExtResource("1_script")
@@ -51,3 +52,24 @@ theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 16
 text = "Lives: 3"
+
+
+[node name="ProgressBar" type="Control" parent="."]
+
+layout_mode = 3
+
+anchors_preset = 10
+
+anchor_right = 1.0
+
+offset_left = 20.0
+
+offset_top = 32.0
+
+offset_right = -20.0
+
+offset_bottom = 40.0
+
+script = ExtResource("2_script")
+
+

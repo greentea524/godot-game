@@ -176,6 +176,29 @@ func _register(pname: String, avatar: int) -> void:
 	roster[id] = _entry(pname, avatar, roster.size())
 	_sync_roster.rpc(roster)
 
+@rpc("any_peer", "reliable")
+func update_profile(pname: String, avatar: int) -> void:
+	if not is_host():
+		return
+	var id := multiplayer.get_remote_sender_id()
+	if roster.has(id):
+		roster[id]["name"] = pname
+		roster[id]["avatar"] = avatar
+		_sync_roster.rpc(roster)
+
+func broadcast_profile(pname: String, avatar: int) -> void:
+	if not active:
+		return
+	local_name = pname
+	if is_host():
+		var id := multiplayer.get_unique_id()
+		if roster.has(id):
+			roster[id]["name"] = pname
+			roster[id]["avatar"] = avatar
+			_sync_roster.rpc(roster)
+	else:
+		update_profile.rpc_id(1, pname, avatar)
+
 
 ## Host -> everyone: the authoritative roster.
 @rpc("authority", "call_local", "reliable")

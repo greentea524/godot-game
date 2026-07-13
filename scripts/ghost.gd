@@ -22,6 +22,7 @@ func setup(av: int, pname: String) -> void:
 
 
 func _ready() -> void:
+	add_to_group("ghosts")
 	modulate = Color(1.0, 1.0, 1.0, 0.65)  # ghosts read as translucent
 	sprite.sprite_frames = _build_frames(load(GameManager.AVATAR_SHEETS[avatar]))
 	sprite.play("idle")

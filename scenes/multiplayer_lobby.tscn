@@ -36,6 +36,24 @@ theme_override_font_sizes/font_size = 32
 horizontal_alignment = 1
 text = "MULTIPLAYER"
 
+[node name="ProfileRow" type="HBoxContainer" parent="Center/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 10
+
+[node name="NameEdit" type="LineEdit" parent="Center/VBox/ProfileRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+placeholder_text = "Your Name"
+max_length = 16
+
+[node name="AvatarRow" type="HBoxContainer" parent="Center/VBox/ProfileRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 4
+
 [node name="Status" type="Label" parent="Center/VBox"]
 unique_name_in_owner = true
 layout_mode = 2

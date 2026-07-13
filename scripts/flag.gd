@@ -3,6 +3,8 @@ extends Area2D
 
 var _reached := false
 
+func _ready() -> void:
+	add_to_group("flag")
 
 func _on_body_entered(body: Node2D) -> void:
 	if body is not Player or (body as Player).dying or _reached:
@@ -19,4 +21,6 @@ func reach_flag() -> void:
 	# Jingle plays on goal contact, before the UI transition (PG-27);
 	# the Sfx autoload keeps it alive across the scene change.
 	Sfx.play_sfx("level_complete")
+	if owner and "level_time" in owner:
+		GameManager.submit_level_clear(owner.level_time)
 	GameManager.level_complete()

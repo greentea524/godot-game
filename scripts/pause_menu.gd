@@ -9,6 +9,10 @@ func _ready() -> void:
 	%ResumeButton.pressed.connect(_resume)
 	%RestartButton.pressed.connect(_restart)
 	%MapButton.pressed.connect(_map)
+	%AchievementsButton.pressed.connect(func():
+		var ach_menu = preload("res://scenes/achievements_menu.tscn").instantiate()
+		add_child(ach_menu)
+	)
 	%QuitButton.pressed.connect(_quit)
 
 

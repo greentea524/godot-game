@@ -16,9 +16,43 @@ func _ready() -> void:
 	Net.connection_failed.connect(func() -> void: _set_status("Connection failed."); _unlock())
 	Net.server_disconnected.connect(func() -> void: _set_status("Host disconnected."))
 	Net.local_name = "Player %d" % (randi() % 900 + 100)
+	%NameEdit.text = Net.local_name
+	%NameEdit.text_changed.connect(_on_name_changed)
+	_build_avatar_row()
+	
 	%JoinRow.visible = false
 	%StartButton.visible = false
 	_set_status("Host a game, or join one on your LAN.")
+
+func _on_name_changed(new_text: String) -> void:
+	if new_text.strip_edges() == "":
+		return
+	Net.broadcast_profile(new_text.strip_edges(), GameManager.selected_avatar)
+
+func _build_avatar_row() -> void:
+	for child in %AvatarRow.get_children():
+		child.queue_free()
+	for i in range(GameManager.AVATAR_SHEETS.size()):
+		var btn := Button.new()
+		btn.custom_minimum_size = Vector2(48, 48)
+		if i == GameManager.selected_avatar:
+			btn.modulate = Color(1.2, 1.2, 1.2)
+		else:
+			btn.modulate = Color(0.6, 0.6, 0.6)
+		var icon := TextureRect.new()
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		var frame := AtlasTexture.new()
+		frame.atlas = load(GameManager.AVATAR_SHEETS[i])
+		frame.region = Rect2(0, 0, 16, 16)
+		icon.texture = frame
+		icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 4)
+		btn.add_child(icon)
+		btn.pressed.connect(func():
+			GameManager.selected_avatar = i
+			_build_avatar_row()
+			Net.broadcast_profile(Net.local_name, i)
+		)
+		%AvatarRow.add_child(btn)
 
 
 func _on_host() -> void:

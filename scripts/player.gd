@@ -31,6 +31,7 @@ var _air_jumps_left := MAX_AIR_JUMPS
 
 
 func _ready() -> void:
+	add_to_group("player")
 	_apply_avatar()
 
 
@@ -127,9 +128,10 @@ func _double_jump_flair() -> void:
 ## Upward bounce after stomping an enemy.
 func bounce() -> void:
 	velocity.y = STOMP_BOUNCE
+	GameManager.add_stomp()
 
 
-func die() -> void:
+func die(cause: String = "") -> void:
 	if dying:
 		return
 	dying = true
@@ -138,6 +140,7 @@ func die() -> void:
 	velocity = Vector2(0.0, DEATH_HOP)
 	collision_layer = 0
 	collision_mask = 0
+	GameManager.add_death(cause)
 	if GameManager.lose_life():
 		GameManager.trigger_game_over()
 	else:
