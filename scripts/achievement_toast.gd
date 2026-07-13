@@ -8,7 +8,7 @@ extends CanvasLayer
 
 func _ready() -> void:
 	panel.position.y = -120
-	panel.position.x = 640 / 2.0 - 150 # Centered on a 640 width screen
+	panel.position.x = 640 / 2.0 - 100 # Centered on a 640 width screen (200 width)
 
 func display(achievement: Dictionary) -> void:
 	icon_label.text = achievement.get("icon", "")
